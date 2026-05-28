@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatDrop - Multi-Song Downloader</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-glow"></div>
+                <i class="fa-solid fa-cloud-arrow-down brand-icon"></i>
+                <span class="brand-name">BeatDrop</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="search-tab" id="nav-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Search & Import</span>
+                </button>
+                <button class="nav-item" data-tab="video-tab" id="nav-video">
+                    <i class="fa-brands fa-youtube"></i>
+                    <span>Video Downloader</span>
+                </button>
+                <button class="nav-item" data-tab="facebook-tab" id="nav-facebook">
+                    <i class="fa-brands fa-facebook"></i>
+                    <span>Facebook Downloader</span>
+                </button>
+                <button class="nav-item" data-tab="instagram-tab" id="nav-instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                    <span>Instagram Downloader</span>
+                </button>
+                <button class="nav-item" data-tab="queue-tab" id="nav-queue">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Download Queue</span>
+                    <span class="queue-badge" id="queue-badge" style="display: none;">0</span>
+                </button>
+                <button class="nav-item" data-tab="library-tab" id="nav-library">
+                    <i class="fa-solid fa-music"></i>
+                    <span>My Library</span>
+                    <span class="queue-badge" id="library-badge" style="display:none;">0</span>
+                </button>
+                <button class="nav-item" data-tab="settings-tab" id="nav-settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="config-summary">
+                    <span class="summary-label">Save Directory:</span>
+                    <span class="summary-value" id="mini-dir-val">Not Selected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- TAB 1: Search & Import -->
+            <section id="search-tab" class="tab-pane active">
+                <header class="tab-header">
+                    <h1>Discover Music</h1>
+                    <p>Search tracks or paste full albums and playlist links to batch download</p>
+                </header>
+
+                <!-- Search and Import Bar Control -->
+                <div class="search-controls">
+                    <div class="search-bar-wrapper">
+                        <i class="fa-solid fa-magnifying-glass search-input-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search song name, artists, album... or paste a JioSaavn / YouTube Music URL">
+                        <button class="search-btn" id="search-btn">
+                            <span id="search-btn-text">Search</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="provider-selector">
+                        <span class="selector-label">Search Backend:</span>
+                        <div class="btn-group">
+                            <button class="provider-btn active" data-provider="combined" id="btn-provider-combined">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Collaborated Database (All)
+                            </button>
+                            <button class="provider-btn" data-provider="jiosaavn" id="btn-provider-saavn">
+                                <i class="fa-solid fa-music"></i> JioSaavn Only
+                            </button>
+                            <button class="provider-btn" data-provider="ytmusic" id="btn-provider-yt">
+                                <i class="fa-brands fa-youtube"></i> YouTube Music Only
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Link Import Details Header Banner -->
+                <div class="imported-details-banner" id="imported-banner" style="display: none;">
+                    <div class="banner-cover">
+                        <img src="" id="banner-cover-img" alt="Artwork">
+                        <div class="banner-glow"></div>
+                    </div>
+                    <div class="banner-meta">
+                        <span class="badge" id="banner-type-badge">Album</span>
+                        <h2 id="banner-title">Imported Album Title</h2>
+                        <p id="banner-count">0 tracks found</p>
+                    </div>
+                    <button class="close-banner-btn" id="close-banner-btn">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-container">
+                    <!-- Bulk Action Control Header -->
+                    <div class="bulk-header" id="bulk-header" style="display: none;">
+                        <div class="bulk-selection-info">
+                            <label class="custom-checkbox">
+                                <input type="checkbox" id="select-all-checkbox">
+                                <span class="checkmark"></span>
+                            </label>
+                            <span class="selection-count" id="selection-count-text">0 songs selected</span>
+                        </div>
+                        <div class="bulk-actions">
+                            <button class="action-btn download-selected-btn" id="download-selected-btn">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Download Selected</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tracks List Grid -->
+                    <div class="tracks-list" id="tracks-list">
+                        <!-- Initial placeholder state -->
+                        <div class="empty-state">
+                            <i class="fa-solid fa-cloud-arrow-down empty-icon"></i>
+                            <h3>Start your search</h3>
+                            <p>Enter song keywords, or paste a song/album/playlist link from JioSaavn or YouTube Music to resolve tracks.</p>
+                            
+                            <div class="sample-links-box">
+                                <h4>Try resolving these sample URLs:</h4>
+                                <ul>
+                                    <li><a href="#" class="sample-url-link">https://www.jiosaavn.com/album/brahmastra/xq4v9ZFC9iA_</a></li>
+                                    <li><a href="#" class="sample-url-link">https://music.youtube.com/watch?v=NJAv_7lHUIU</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 1.5: Video Downloader -->
+            <section id="video-tab" class="tab-pane">
+                <header class="tab-header">
+                    <h1>YouTube Video Downloader</h1>
+                    <p>Search YouTube videos or paste a video link to download them as MP4</p>
+                </header>
+
+                <!-- Search and Import Bar Control -->
+                <div class="search-controls">
+                    <div class="search-bar-wrapper video-search-bar-wrapper">
+                        <i class="fa-solid fa-video search-input-icon"></i>
+                        <input type="text" id="video-search-input" placeholder="Search YouTube video name, channel... or paste a YouTube Video URL">
+                        <button class="search-btn video-search-btn" id="video-search-btn">
+                            <span id="video-search-btn-text">Search</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Unique Category Chips -->
+                    <div class="video-tags-container">
+                        <button class="video-tag-chip active" data-tag="trending music">
+                            <i class="fa-solid fa-fire"></i> Trending Music
+                        </button>
+                        <button class="video-tag-chip" data-tag="gaming">
+                            <i class="fa-solid fa-gamepad"></i> Gaming
+                        </button>
+                        <button class="video-tag-chip" data-tag="movies">
+                            <i class="fa-solid fa-film"></i> Movies
+                        </button>
+                        <button class="video-tag-chip" data-tag="tech reviews">
+                            <i class="fa-solid fa-laptop"></i> Tech
+                        </button>
+                        <button class="video-tag-chip" data-tag="news">
+                            <i class="fa-solid fa-newspaper"></i> News
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Link Import Details Header Banner -->
+                <div class="imported-details-banner" id="video-imported-banner" style="display: none;">
+                    <div class="banner-cover">
+                        <img src="" id="video-banner-cover-img" alt="Artwork">
+                        <div class="banner-glow"></div>
+                    </div>
+                    <div class="banner-meta">
+                        <span class="badge">YouTube Video</span>
+                        <h2 id="video-banner-title">Imported Video Title</h2>
+                        <p id="video-banner-channel">Channel: Unknown</p>
+                    </div>
+                    <button class="close-banner-btn" id="video-close-banner-btn">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Results Container -->
+                <div class="results-container">
+                    <div class="tracks-list" id="video-results-list">
+                        <!-- Results will be rendered here dynamically -->
+                        <div class="empty-state">
+                            <i class="fa-brands fa-youtube empty-icon" style="color: #ef4444;"></i>
+                            <h3>Search or Paste Video Link</h3>
+                            <p>Enter video title keywords, or paste a direct YouTube video link to download it in high quality.</p>
+                            <div class="sample-links-box">
+                                <h4>Try resolving these sample URLs:</h4>
+                                <ul>
+                                    <li><a href="#" class="video-sample-url-link">https://www.youtube.com/watch?v=NJAv_7lHUIU</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 1.6: Facebook Downloader -->
+            <section id="facebook-tab" class="tab-pane">
+                <header class="tab-header">
+                    <h1>Facebook Content Downloader</h1>
+                    <p>Download Facebook videos, reels, and posts by pasting their URL</p>
+                </header>
+
+                <!-- Search and Import Bar Control -->
+                <div class="search-controls">
+                    <div class="search-bar-wrapper fb-search-bar-wrapper">
+                        <i class="fa-brands fa-facebook search-input-icon"></i>
+                        <input type="text" id="fb-search-input" placeholder="Paste Facebook video, reel, or post URL here...">
+                        <button class="search-btn fb-search-btn" id="fb-search-btn">
+                            <span id="fb-search-btn-text">Resolve</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Link Import Details Header Banner -->
+                <div class="imported-details-banner fb-imported-banner" id="fb-imported-banner" style="display: none;">
+                    <div class="banner-cover">
+                        <img src="" id="fb-banner-cover-img" alt="Artwork">
+                        <div class="banner-glow fb-banner-glow"></div>
+                    </div>
+                    <div class="banner-meta">
+                        <span class="badge fb-video-badge">Facebook Content</span>
+                        <h2 id="fb-banner-title">Imported Facebook Video</h2>
+                        <p id="fb-banner-uploader">Uploader: Unknown</p>
+                    </div>
+                    <button class="close-banner-btn" id="fb-close-banner-btn">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Results Container -->
+                <div class="results-container">
+                    <div class="tracks-list" id="fb-results-list">
+                        <!-- Results will be rendered here dynamically -->
+                        <div class="empty-state">
+                            <i class="fa-brands fa-facebook empty-icon" style="color: #1877f2;"></i>
+                            <h3>Paste Facebook URL</h3>
+                            <p>Paste a direct Facebook video or reel link to fetch metadata and download it in high quality.</p>
+                            <div class="sample-links-box">
+                                <h4>Try resolving these sample URLs:</h4>
+                                <ul>
+                                    <li><a href="#" class="fb-sample-url-link">https://www.facebook.com/watch/?v=10158402488188188</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 1.7: Instagram Downloader -->
+            <section id="instagram-tab" class="tab-pane">
+                <header class="tab-header">
+                    <h1>Instagram Content Downloader</h1>
+                    <p>Download Instagram reels, videos, and posts by pasting their URL</p>
+                </header>
+
+                <!-- Search and Import Bar Control -->
+                <div class="search-controls">
+                    <div class="search-bar-wrapper ig-search-bar-wrapper">
+                        <i class="fa-brands fa-instagram search-input-icon"></i>
+                        <input type="text" id="ig-search-input" placeholder="Paste Instagram reel, video, or post URL here...">
+                        <button class="search-btn ig-search-btn" id="ig-search-btn">
+                            <span id="ig-search-btn-text">Resolve</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Link Import Details Header Banner -->
+                <div class="imported-details-banner ig-imported-banner" id="ig-imported-banner" style="display: none;">
+                    <div class="banner-cover">
+                        <img src="" id="ig-banner-cover-img" alt="Artwork">
+                        <div class="banner-glow ig-banner-glow"></div>
+                    </div>
+                    <div class="banner-meta">
+                        <span class="badge ig-video-badge">Instagram Content</span>
+                        <h2 id="ig-banner-title">Imported Instagram Post</h2>
+                        <p id="ig-banner-uploader">Uploader: Unknown</p>
+                    </div>
+                    <button class="close-banner-btn" id="ig-close-banner-btn">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Results Container -->
+                <div class="results-container">
+                    <div class="tracks-list" id="ig-results-list">
+                        <!-- Results will be rendered here dynamically -->
+                        <div class="empty-state">
+                            <i class="fa-brands fa-instagram empty-icon" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                            <h3>Paste Instagram URL</h3>
+                            <p>Paste a direct Instagram reel or post link to fetch metadata and download it in high quality.</p>
+                            <div class="sample-links-box">
+                                <h4>Try resolving these sample URLs:</h4>
+                                <ul>
+                                    <li><a href="#" class="ig-sample-url-link">https://www.instagram.com/reel/C7D_U-Nuh1Y/</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: Download Queue -->
+            <section id="queue-tab" class="tab-pane">
+                <header class="tab-header">
+                    <div class="header-action-split">
+                        <div>
+                            <h1>Download Queue</h1>
+                            <p>Track active downloads and process logs</p>
+                        </div>
+                        <div class="queue-global-actions">
+                            <button class="queue-action-btn secondary" id="clear-completed-btn">
+                                <i class="fa-solid fa-broom"></i> Clear Completed
+                            </button>
+                            <button class="queue-action-btn danger" id="clear-all-btn">
+                                <i class="fa-solid fa-trash-can"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="queue-container">
+                    <div class="queue-stats-bar">
+                        <div class="stat-card">
+                            <span class="stat-num" id="stat-total">0</span>
+                            <span class="stat-label">Total Tracks</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-num" id="stat-downloading">0</span>
+                            <span class="stat-label">Downloading</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-num" id="stat-completed">0</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
+
+                    <div class="queue-list" id="queue-list">
+                        <!-- Queue empty state -->
+                        <div class="empty-state">
+                            <i class="fa-solid fa-list-check empty-icon"></i>
+                            <h3>Queue is Empty</h3>
+                            <p>Active downloads will be shown here. Go to search, select songs, and click Download.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: My Library -->
+            <section id="library-tab" class="tab-pane">
+                <header class="tab-header">
+                    <h1>My Library</h1>
+                    <p>All your downloaded songs — play any track directly from here</p>
+                </header>
+
+                <div class="library-toolbar">
+                    <div class="library-stats" id="library-stats">Scanning library...</div>
+                    <div class="library-search-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="library-filter" placeholder="Filter by title or artist...">
+                    </div>
+                    <button class="action-btn" id="refresh-library-btn">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="library-grid" id="library-grid">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-compact-disc empty-icon"></i>
+                        <h3>Library is Empty</h3>
+                        <p>Download some songs first — they'll appear here with play buttons.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: Settings -->
+            <section id="settings-tab" class="tab-pane">
+                <header class="tab-header">
+                    <h1>Configuration Settings</h1>
+                    <p>Adjust folder path, concurrency thresholds, and quality preferences</p>
+                </header>
+
+                <div class="settings-card card">
+                    <h3 class="card-title"><i class="fa-solid fa-folder-open icon-purple"></i> Local Destination Folder</h3>
+                    <p class="setting-desc">Specify where downloaded tracks are stored. This folder path is stored in your configuration and is remembered.</p>
+                    
+                    <div class="folder-picker-box">
+                        <input type="text" id="setting-folder-path" readonly placeholder="No download directory selected">
+                        <button class="picker-btn" id="change-folder-btn">
+                            <i class="fa-solid fa-folder-tree"></i> Choose Folder
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-card card">
+                    <h3 class="card-title"><i class="fa-solid fa-bolt icon-orange"></i> Download Parameters</h3>
+                    <p class="setting-desc">Tweak the parallel processing queues and quality defaults.</p>
+                    
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <span class="setting-name">Max Parallel Downloads</span>
+                            <span class="setting-subtext">Number of tracks downloaded at the same time. Higher values speed up large batch downloads but require more bandwidth.</span>
+                        </div>
+                        <div class="setting-control">
+                            <select id="setting-concurrency">
+                                <option value="1">1 (Sequential)</option>
+                                <option value="2">2 Concurrent</option>
+                                <option value="3" selected>3 Concurrent (Recommended)</option>
+                                <option value="5">5 Concurrent (Fast connection)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card card">
+                    <h3 class="card-title"><i class="fa-solid fa-circle-info icon-blue"></i> Technical Specifications</h3>
+                    <p class="setting-desc">Here are the details of the active download configurations:</p>
+                    
+                    <table class="specs-table">
+                        <tr>
+                            <td><strong>JioSaavn Quality</strong></td>
+                            <td>High quality 320kbps MP4/AAC (Metadata embedded: Album Art, Lyrics, Artist tags)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>YouTube Music Quality</strong></td>
+                            <td>Native High Quality Audio stream (Opus/WebM or AAC/M4A), tags auto-applied</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Decryption Module</strong></td>
+                            <td>pyDes 56-bit DES symmetric decryption in ECB mode</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tagging Engine</strong></td>
+                            <td>Mutagen ID3 & MP4 metadata mapping</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+            
+        </main>
+    </div>
+
+    <!-- Video Player Modal Overlay -->
+    <div class="video-modal-overlay" id="video-player-modal" style="display: none;">
+        <div class="video-modal-container">
+            <div class="video-modal-header">
+                <h3 id="video-modal-title">Video Title</h3>
+                <button class="video-modal-close" id="video-modal-close-btn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="video-modal-body">
+                <video id="app-video-player" controls autoplay preload="auto"></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- Main Controller Logic Script -->
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

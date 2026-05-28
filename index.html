@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Symphony – Stream millions of songs free. Search, discover, and play your favourite Bollywood, Pop, and International tracks.">
+    <title>Symphony - Music Player</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Boxicons for modern icons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class='bx bx-music'></i>
+                <span>Symphony</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <h4>Browse</h4>
+                    <a href="#" id="navHome" class="nav-item active"><i class='bx bx-home-alt'></i> Home</a>
+                    <a href="#" id="navTopPlaylists" class="nav-item"><i class='bx bx-list-ul'></i> Top Playlists</a>
+                    <a href="#" id="navDevotional" class="nav-item"><i class='bx bx-sun'></i> Devotional</a>
+                    <a href="#" id="navArtists" class="nav-item"><i class='bx bx-microphone'></i> Top Artists</a>
+                    <a href="#" id="navRadio" class="nav-item"><i class='bx bx-broadcast'></i> Radio</a>
+                </div>
+                
+                <div class="nav-section">
+                    <h4>Library</h4>
+                    <a href="#" id="navPlayedSongs" class="nav-item"><i class='bx bx-history'></i> History</a>
+                    <a href="#" id="navLiked" class="nav-item"><i class='bx bx-music'></i> Liked Songs</a>
+                    <a href="#" id="navAlbums" class="nav-item"><i class='bx bx-disc'></i> Albums</a>
+                    <a href="#" id="navPreferences" class="nav-item"><i class='bx bx-slider-alt'></i> Preferences</a>
+                </div>
+            </nav>
+
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile off-canvas menu -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="nav-controls">
+                    <button class="nav-btn mobile-menu-btn" id="mobileMenuBtn" style="display: none;" title="Open Menu"><i class='bx bx-menu'></i></button>
+                    <button class="nav-btn" id="sidebarToggleBtn" title="Toggle Sidebar"><i class='bx bx-menu'></i></button>
+                    <button class="nav-btn" id="navBackBtn"><i class='bx bx-chevron-left'></i></button>
+                    <button class="nav-btn" id="navForwardBtn"><i class='bx bx-chevron-right'></i></button>
+                </div>
+                <div class="search-container">
+                    <i class='bx bx-search search-icon'></i>
+                    <input type="text" id="searchInput" placeholder="Search for songs, artists, or podcasts...">
+                    <i class='bx bx-x clear-search-icon hidden' id="clearSearchBtn" title="Clear Search"></i>
+                </div>
+                <div class="topbar-actions">
+                    <div class="api-toggle-container" style="display: none !important;">
+                        <label for="apiSourceToggle">Source:</label>
+                        <select id="apiSourceToggle" class="select-premium">
+                            <option value="saavn">JioSaavn API</option>
+                            <option value="ytmusic">YouTube Music API</option>
+                        </select>
+                    </div>
+
+                    <div class="lang-selector-container">
+                        <i class='bx bx-globe lang-icon'></i>
+                        <select id="topbarLangSelect" class="select-premium" title="Choose Music Language">
+                            <!-- populated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div class="auth-actions">
+                        <button id="authBtn" class="btn-premium"><i class='bx bx-user-circle'></i> <span class="auth-text">Log In</span></button>
+                        <div id="userProfile" class="user-profile hidden">
+                            <i class='bx bx-user-circle' style="font-size: 18px; margin-right: 2px;"></i>
+                            <span id="userDisplayName">User</span>
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <div class="profile-dropdown-header">
+                                    <div class="profile-dropdown-avatar" id="profileDropdownAvatar">U</div>
+                                    <div class="profile-dropdown-info">
+                                        <div class="profile-dropdown-name" id="profileDropdownName">User</div>
+                                        <div class="profile-dropdown-badge">Premium Member</div>
+                                    </div>
+                                </div>
+                                <button class="profile-dropdown-item" id="btnMyProfile">
+                                    <span><i class='bx bx-user'></i> My Profile</span>
+                                </button>
+                                <button class="profile-dropdown-item" id="btnDropdownLikes">
+                                    <span><i class='bx bx-heart'></i> Liked Songs</span>
+                                    <span id="dropdownLikesCount" class="badge-count" style="background: var(--accent-color); padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; color: white;">0</span>
+                                </button>
+                                <button class="profile-dropdown-item" id="btnDropdownCloud" style="display: none !important;">
+                                    <span><i class='bx bx-cloud'></i> Cloud Sync Setup</span>
+                                </button>
+                                <div class="profile-dropdown-divider"></div>
+                                <button class="profile-dropdown-item" id="logoutBtn">
+                                    <span><i class='bx bx-log-out'></i> Log Out</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable Content -->
+            <div class="content-scroll" id="mainContentArea">
+                <!-- Initial Loader -->
+                <div class="loader-container" id="mainLoader">
+                    <div class="spinner"></div>
+                </div>
+
+                <!-- Sections will be injected here via JS -->
+                <section class="music-section hidden" id="searchResultsSection">
+                    <h2>Search Results</h2>
+                    <div class="card-grid" id="searchResultsGrid"></div>
+                    
+                    <!-- Related Search Results suggestions -->
+                    <div id="relatedSearchResultsContainer" class="hidden" style="margin-top: 40px;">
+                        <h2 style="margin-bottom: 16px;">Related Songs 🌟</h2>
+                        <div class="card-grid" id="relatedSearchResultsGrid"></div>
+                    </div>
+
+                    <!-- Related Playlists -->
+                    <div id="relatedSearchPlaylistsContainer" class="hidden" style="margin-top: 40px;">
+                        <h2 style="margin-bottom: 16px;">Related Playlists 🎵</h2>
+                        <div class="card-grid" id="relatedSearchPlaylistsGrid"></div>
+                    </div>
+
+                    <!-- Related Radios -->
+                    <div id="relatedSearchRadiosContainer" class="hidden" style="margin-top: 40px;">
+                        <h2 style="margin-bottom: 16px;">Related Radio Stations 📻</h2>
+                        <div class="card-grid" id="relatedSearchRadiosGrid"></div>
+                    </div>
+
+                    <div class="search-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
+                        <button id="loadMoreSearchBtn" class="btn-premium hidden">Load More Results</button>
+                    </div>
+                </section>
+
+                <section class="music-section hidden" id="likedSongsSection">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px;">
+                        <h2 style="margin: 0;">Liked Songs</h2>
+                        <button id="shareLikedBtn" class="share-playlist-btn" style="display: inline-flex; align-items: center; gap: 8px;"><i class='bx bx-share-alt'></i> Share Playlist</button>
+                    </div>
+                    <div class="card-grid" id="likedSongsGrid"></div>
+                </section>
+
+                <section class="music-section hidden" id="playedSongsSection">
+                    <h2>Played Songs</h2>
+                    <div class="card-grid" id="playedSongsGrid"></div>
+                </section>
+
+                <section class="music-section hidden" id="artistsSection">
+                    <h2>Popular Artists</h2>
+                    <div class="artist-filters" id="artistFilters" style="display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;">
+                        <!-- Filter buttons will be injected via JS -->
+                    </div>
+                    <div class="artist-grid" id="artistsGrid"></div>
+                    <div class="artists-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
+                        <button id="loadMoreArtistsBtn" class="btn-premium hidden">Load More Artists</button>
+                    </div>
+                </section>
+
+                <section class="music-section hidden" id="artistDetailSection">
+                    <div class="artist-header" style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; background: linear-gradient(transparent, rgba(0,0,0,0.5)); padding: 24px; border-radius: 12px;">
+                        <img id="artistDetailImg" src="" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-color);">
+                        <div>
+                            <h1 id="artistDetailName" style="font-size: 36px; margin: 0 0 8px 0; font-weight: 700;">Artist Name</h1>
+                            <button id="playArtistRadioBtn" class="btn-premium" style="display: inline-flex; align-items: center; gap: 8px;"><i class='bx bx-play'></i> Play Artist Songs</button>
+                        </div>
+                    </div>
+                    <h2>Top Songs</h2>
+                    <div class="card-grid" id="artistDetailGrid"></div>
+                    <div class="artist-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
+                        <button id="loadMoreArtistBtn" class="btn-premium hidden">Load More Songs</button>
+                    </div>
+                </section>
+
+
+
+                <!-- Top Playlists Section -->
+                <section class="music-section hidden" id="topPlaylistsSection">
+                    <h2>Top Playlists 🎵</h2>
+                    <p class="section-subtitle" style="color: var(--text-secondary); margin-bottom: 24px;">Curated soundscapes to fit every vibe and activity.</p>
+                    <div class="card-grid" id="topPlaylistsGrid"></div>
+                    <div class="top-playlists-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
+                        <button id="loadMoreTopPlaylistsBtn" class="btn-premium hidden">Load More Playlists</button>
+                    </div>
+                </section>
+
+                <!-- Devotional Section -->
+                <section class="music-section hidden" id="devotionalSection">
+                    <h2>Devotional Peace 🙏</h2>
+                    <p class="section-subtitle" style="color: var(--text-secondary); margin-bottom: 24px;">Start your day with peaceful prayers, divine chants, and customized mixes.</p>
+                    <div class="card-grid" id="devotionalGrid"></div>
+                    <div class="devotional-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
+                        <button id="loadMoreDevotionalBtn" class="btn-premium hidden">Load More Devotional Playlists</button>
+                    </div>
+                </section>
+
+                <!-- Radio Section -->
+                <section class="music-section hidden" id="radioSection">
+                    <div class="radio-header-banner">
+                        <div class="radio-header-icon">
+                            <i class='bx bx-broadcast'></i>
+                        </div>
+                        <div>
+                            <span class="hero-badge" style="background: rgba(209, 54, 246, 0.2); border: 1px solid rgba(209, 54, 246, 0.4); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 8px;">📻 LIVE BROADCAST</span>
+                            <h1 style="font-size: 32px; margin: 0 0 8px 0; font-weight: 800; background: linear-gradient(90deg, #fff, #ebd3f8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Live & Artist Radio</h1>
+                            <p style="color: var(--text-secondary); margin: 0; font-size: 14px; font-weight: 500; max-width: 600px;">Pick a station to start an endless mix of related tunes instantly. Customize your experience by selecting languages and artists.</p>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="radioGrid"></div>
+                    <div class="radio-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
+                        <button id="loadMoreRadioBtn" class="btn-premium hidden">Load More Radio Stations</button>
+                    </div>
+                </section>
+
+                <!-- Albums Section -->
+                <section class="music-section hidden" id="albumsSection">
+                    <h2>Featured Albums 📀</h2>
+                    <p class="section-subtitle" style="color: var(--text-secondary); margin-bottom: 24px;">Discover popular and classic albums from top artists.</p>
+                    <div class="card-grid" id="albumsGrid"></div>
+                </section>
+                
+                <!-- Album Detail View Section -->
+                <section class="music-section hidden" id="albumDetailSection">
+                    <div class="artist-header" style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; background: linear-gradient(transparent, rgba(0,0,0,0.5)); padding: 24px; border-radius: 12px;">
+                        <img id="albumDetailImg" src="" style="width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 3px solid var(--accent-cyan);">
+                        <div>
+                            <span class="hero-badge" style="margin-bottom: 8px; display: inline-block;">📀 COLLECTION</span>
+                            <h1 id="albumDetailName" style="font-size: 36px; margin: 0 0 8px 0; font-weight: 700;">Collection Title</h1>
+                            <p id="albumDetailSub" style="color: var(--text-secondary); margin-bottom: 12px; font-weight: 500;">By Creator • 0 tracks</p>
+                            <button id="playAlbumBtn" class="btn-premium" style="display: inline-flex; align-items: center; gap: 8px;"><i class='bx bx-play'></i> Play Collection</button>
+                            <button id="sharePlaylistBtn" class="share-playlist-btn" style="display: inline-flex; align-items: center; gap: 8px;"><i class='bx bx-share-alt'></i> Share Playlist</button>
+                        </div>
+                    </div>
+                    <h2>Tracks</h2>
+                    <div class="card-grid" id="albumDetailGrid"></div>
+                </section>
+
+                <!-- Hero Banner -->
+                <div class="hero-banner" id="heroBanner">
+                    <div class="hero-banner-content">
+                        <span class="hero-badge">🎵 Now Streaming</span>
+                        <h1 id="heroGreeting">Good evening 👋</h1>
+                        <p>Discover your next favourite song. Search above or explore curated picks below.</p>
+                    </div>
+                    <div class="hero-clock-container">
+                        <div class="hero-clock" id="heroClock">--:--:-- --</div>
+                        <div class="hero-date" id="heroDate">---</div>
+                    </div>
+                </div>
+
+                <section class="music-section" id="homeSection">
+                    <h2>Trending Now</h2>
+                    <div class="card-grid" id="trendingGrid">
+                        <!-- Cards injected via JS -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Music Player Bottom Bar -->
+    <div class="player-bar">
+        <!-- Track Info -->
+        <div class="track-info">
+            <img src="" alt="Album Art" id="playerImage" class="hidden">
+            <div class="track-details">
+                <div class="track-name" id="playerTitle">No track selected</div>
+                <div class="track-artist" id="playerArtist">-</div>
+            </div>
+            <button class="like-btn"><i class='bx bx-heart'></i></button>
+            <button class="radio-btn" id="playerRadioBtn" title="Start Artist Radio"><i class='bx bx-broadcast'></i></button>
+            <button class="radio-btn" id="fromPlayingBtn" title="from Playing" style="display: none;"><i class='bx bx-reply' style='font-size: 22px;'></i></button>
+        </div>
+
+        <!-- Player Controls -->
+        <div class="player-controls-container">
+            <div class="player-controls">
+                <button class="control-btn" id="shuffleBtn" title="Shuffle"><i class='bx bx-shuffle'></i></button>
+                <button class="control-btn main-action" id="prevBtn"><i class='bx bx-skip-previous'></i></button>
+                <button class="control-btn play-btn" id="playPauseBtn"><i class='bx bx-play'></i></button>
+                <button class="control-btn main-action" id="nextBtn"><i class='bx bx-skip-next'></i></button>
+                <button class="control-btn" id="repeatBtn" title="Repeat"><i class='bx bx-repeat'></i></button>
+            </div>
+            <div class="progress-container">
+                <span class="time current-time" id="currentTimeDisplay">0:00</span>
+                <div class="progress-bar-wrapper" id="progressBarWrapper">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <input type="range" min="0" max="100" value="0" class="seek-slider" id="seekSlider">
+                </div>
+                <span class="time total-time" id="totalTimeDisplay">0:00</span>
+            </div>
+        </div>
+
+        <!-- Extra Controls (Volume etc.) -->
+        <div class="extra-controls">
+            <button class="control-btn" id="queueBtn" title="Play Queue"><i class='bx bx-list-ul'></i></button>
+            <button class="control-btn" id="devicesBtn" title="Playback & Quality Settings"><i class='bx bx-devices'></i></button>
+            <div class="volume-container">
+                <i class='bx bx-volume-full' id="volumeIcon"></i>
+                <input type="range" min="0" max="100" value="100" class="volume-slider" id="volumeSlider">
+            </div>
+        </div>
+    </div>
+
+    <!-- HTML5 Audio Element -->
+    <audio id="audioPlayer"></audio>
+
+    <!-- Firebase Config Modal -->
+    <div id="firebaseConfigModal" class="modal hidden">
+        <div class="modal-content glassmorphism">
+            <span class="close-modal" id="closeConfigModal">&times;</span>
+            <h3>☁️ Configure Firebase Cloud Sync</h3>
+            <p class="modal-subtitle">Paste your Firebase configuration object to enable cloud backup for your Liked Songs and Playlists.</p>
+            
+            <textarea id="firebaseConfigInput" placeholder='{
+  "apiKey": "YOUR_API_KEY",
+  "authDomain": "YOUR_AUTH_DOMAIN",
+  "projectId": "YOUR_PROJECT_ID",
+  "storageBucket": "YOUR_STORAGE_BUCKET",
+  "messagingSenderId": "YOUR_MESSAGING_SENDER_ID",
+  "appId": "YOUR_APP_ID"
+}'></textarea>
+            
+            <div class="modal-actions">
+                <button id="saveConfigBtn" class="btn-premium">Save & Connect</button>
+                <button id="clearConfigBtn" class="btn-danger">Clear Connection</button>
+            </div>
+            <p id="configStatus" class="status-msg"></p>
+        </div>
+    </div>
+
+    <!-- Firebase Auth Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content glassmorphism">
+            <span class="close-modal" id="closeAuthModal">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTabBtn">Log In</button>
+                <button class="auth-tab" id="signupTabBtn">Sign Up</button>
+                <button class="auth-tab" id="phoneTabBtn" style="display: none !important;">Phone</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="yourname@example.com" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-premium">Log In</button>
+            </form>
+            
+            <!-- Signup Form -->
+            <form id="signupForm" class="auth-form hidden">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="signupName" placeholder="Your Name" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="signupEmail" placeholder="yourname@example.com" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn-premium">Create Account</button>
+            </form>
+
+            <!-- Phone Form -->
+            <form id="phoneForm" class="auth-form hidden">
+                <!-- Step 1: Enter Phone Number -->
+                <div id="phoneInputSection">
+                    <div class="form-group">
+                        <label>Phone Number (with Country Code)</label>
+                        <input type="tel" id="phoneNumberInput" placeholder="+91 98765 43210" required autocomplete="tel">
+                    </div>
+                    <button type="button" id="sendOtpBtn" class="btn-premium" style="width: 100%;">Send OTP</button>
+                </div>
+                
+                <!-- Step 2: Enter Verification Code -->
+                <div id="otpInputSection" class="hidden" style="margin-top: 16px;">
+                    <div class="form-group">
+                        <label>One-Time Password (OTP)</label>
+                        <input type="text" id="otpCodeInput" placeholder="6-digit OTP code" maxlength="6">
+                    </div>
+                    <button type="button" id="verifyOtpBtn" class="btn-premium" style="width: 100%;">Verify & Log In</button>
+                </div>
+
+                <!-- Invisible Recaptcha Container -->
+                <div id="recaptcha-container" style="margin-top: 12px; display: flex; justify-content: center;"></div>
+            </form>
+            <div class="auth-divider"><span>or</span></div>
+            <button id="googleAuthBtn" class="btn-google" type="button"><i class='bx bxl-google'></i> Continue with Google</button>
+            <p id="authStatus" class="status-msg"></p>
+        </div>
+    </div>
+
+    <!-- Play Queue Side Panel -->
+    <div id="queuePanel" class="queue-panel hidden glassmorphism">
+        <div class="queue-panel-header">
+            <h3>Play Queue</h3>
+            <button id="closeQueueBtn"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="queue-panel-content">
+            <div class="now-playing-section">
+                <h4 style="font-size: 11px; text-transform: uppercase; color: var(--text-subdued); letter-spacing: 1px; margin-bottom: 8px;">Now Playing</h4>
+                <div id="queueNowPlayingTrack"></div>
+            </div>
+            <div class="next-up-section" style="margin-top: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="font-size: 11px; text-transform: uppercase; color: var(--text-subdued); letter-spacing: 1px;">Next Up</h4>
+                    <button id="clearQueueBtn" style="font-size: 11px; color: var(--accent-color); font-weight: 700; background: none; border: none; cursor: pointer;">Clear Queue</button>
+                </div>
+                <div id="queueNextList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devices Audio Quality Popup -->
+    <div id="devicesPopup" class="devices-popup hidden glassmorphism">
+        <h4>⚡ Playback Settings</h4>
+        <div class="device-section">
+            <h5>Streaming Audio Quality</h5>
+            <button class="quality-option active" data-quality="320kbps">High (320 kbps) 💎</button>
+            <button class="quality-option" data-quality="160kbps">Standard (160 kbps)</button>
+            <button class="quality-option" data-quality="96kbps">Data Saver (96 kbps)</button>
+        </div>
+        <div class="device-divider"></div>
+        <div class="device-section">
+            <h5>Simulated Output Device</h5>
+            <div class="output-device active">
+                <i class='bx bx-laptop'></i>
+                <div style="margin-left: 10px;">
+                    <div class="device-name">This Device (Browser)</div>
+                    <div class="device-status">Active • 32-bit DAC</div>
+                </div>
+            </div>
+            <div class="output-device">
+                <i class='bx bx-broadcast'></i>
+                <div style="margin-left: 10px;">
+                    <div class="device-name">Symphony Web Cast</div>
+                    <div class="device-status">Ready to stream</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Details Modal -->
+    <div id="profileDetailsModal" class="modal hidden">
+        <div class="modal-content glassmorphism" style="max-width: 400px; text-align: center; padding: 32px; position: relative;">
+            <span class="close-modal" id="closeProfileDetailsModal">&times;</span>
+            <div style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-color), var(--accent-cyan)); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 28px; color: white; margin: 0 auto 16px auto;" id="profileModalAvatar">U</div>
+            <h3 id="profileModalName" style="margin-bottom: 8px;">User Name</h3>
+            <p id="profileModalEmail" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">user@example.com</p>
+            
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); padding: 16px; border-radius: 12px; text-align: left; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <span style="color: var(--text-subdued);">Account Type</span>
+                    <span style="font-weight: 700; color: var(--accent-cyan);">Symphony Premium</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <span style="color: var(--text-subdued);">Liked Songs</span>
+                    <span style="font-weight: 700;" id="profileModalLikesCount">0 songs</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <span style="color: var(--text-subdued);">Play History</span>
+                    <span style="font-weight: 700;" id="profileModalPlayedCount">0 songs</span>
+                </div>
+            </div>
+            
+            <button class="btn-premium" style="width: 100%; justify-content: center;" id="closeProfileOkBtn">Close</button>
+        </div>
+    </div>
+
+    <!-- Music Preferences Modal -->
+    <div id="preferencesModal" class="modal hidden">
+        <div class="modal-content glassmorphism" style="max-width: 500px;">
+            <span class="close-modal" id="closePreferencesModal">&times;</span>
+            
+            <div class="pref-step-indicator">
+                <div class="pref-step-dot active" id="prefDot1"></div>
+                <div class="pref-step-dot" id="prefDot2"></div>
+            </div>
+
+            <!-- Step 1: Language Selection -->
+            <div id="prefStep1" class="pref-step">
+                <h3 style="text-align: center; margin-bottom: 8px;">Choose Languages 🌍</h3>
+                <p class="modal-subtitle" style="text-align: center; margin-bottom: 16px;">Select one or more languages for your personalized music feed.</p>
+                
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <button id="loginBtn" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; cursor: pointer;"><i class='bx bx-user-circle'></i> Sign In to sync preferences</button>
+                </div>
+                
+                <div class="pref-grid" id="prefLanguageGrid">
+                    <!-- Injected dynamically via JS -->
+                </div>
+                
+                <div class="modal-actions" style="margin-top: 24px;">
+                    <button id="prefNextBtn" class="btn-premium" style="width: 100%; justify-content: center;">Next Step</button>
+                </div>
+            </div>
+
+           <!-- Step 2: Artist Selection -->
+            <div id="prefStep2" class="pref-step hidden">
+                <h3 style="text-align: center; margin-bottom: 8px;">Choose Artists 🎙️</h3>
+                <p class="modal-subtitle" style="text-align: center; margin-bottom: 16px;">Select your favorite artists to add their tracks to your feed.</p>
+                
+                <div class="pref-artist-grid" id="prefArtistGrid">
+                    <!-- Injected dynamically via JS -->
+                </div>
+                
+                <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 12px; width: 100%;">
+                    <button id="prefBackBtn" class="btn-secondary" style="flex: 1; padding: 10px 20px; border-radius: 20px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); font-weight: 700; cursor: pointer; transition: all 0.2s ease;">Back</button>
+                    <button id="prefSaveBtn" class="btn-premium" style="flex: 1; justify-content: center;">Save & Explore</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/singers.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/player.js"></script>
+    <!-- Playlist Share Toast Notification -->
+    <div id="share-toast" class="toast-hidden">📋 Link copied to clipboard!</div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

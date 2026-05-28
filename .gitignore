@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+server/symphony.db
+.env
+firebase-key.json

@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--active-font, "Inter", system-ui, sans-serif);
+  --font-display: "Outfit", system-ui, sans-serif;
+  
+  --color-bg-deep: var(--bg-deep, #05050f);
+  --color-bg-dark: var(--bg-dark, #0b0b1a);
+  --color-bg-card: var(--bg-card, rgba(20, 20, 40, 0.55));
+  --color-border-glass: var(--border-glass, rgba(255, 255, 255, 0.08));
+  
+  --color-white: var(--text-white, #ffffff);
+  --color-gray-300: var(--text-gray-300, #d1d5db);
+  --color-gray-400: var(--text-gray-400, #9ca3af);
+  --color-gray-500: var(--text-gray-500, #6b7280);
+  --color-gray-600: var(--text-gray-600, #4b5563);
+  
+  --color-brand-yt: #ff0000;
+  --color-brand-ig: #e1306c;
+  --color-brand-fb: #1877f2;
+  --color-brand-snap: #fffc00;
+  
+  --color-accent-indigo: #6366f1;
+  --color-accent-purple: #a855f7;
+  --color-accent-pink: #ec4899;
+}
+
+/* Base custom property declarations for dynamic theme shifts */
+:root {
+  --bg-deep: #05050f;
+  --bg-dark: #0b0b1a;
+  --bg-card: rgba(20, 20, 40, 0.55);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --text-white: #ffffff;
+  --text-gray-300: #d1d5db;
+  --text-gray-400: #9ca3af;
+  --text-gray-500: #6b7280;
+  --text-gray-600: #4b5563;
+  --active-font: "Inter", system-ui, sans-serif;
+}
+
+/* Font Modes */
+.font-sans-mode {
+  --active-font: "Inter", system-ui, sans-serif;
+}
+.font-outfit-mode {
+  --active-font: "Outfit", system-ui, sans-serif;
+}
+.font-serif-mode {
+  --active-font: Georgia, "Times New Roman", serif;
+}
+.font-mono-mode {
+  --active-font: "SFMono-Regular", Consolas, monospace;
+}
+
+/* Theme Mode Overrides */
+.theme-amoled {
+  --bg-deep: #000000;
+  --bg-dark: #050505;
+  --bg-card: rgba(10, 10, 10, 0.85);
+  --border-glass: rgba(255, 255, 255, 0.05);
+}
+
+.theme-cyberpunk {
+  --bg-deep: #05000a;
+  --bg-dark: #0c0014;
+  --bg-card: rgba(24, 0, 48, 0.6);
+  --border-glass: rgba(236, 72, 153, 0.25);
+  --text-white: #00ffff;
+  --text-gray-300: #ec4899;
+  --text-gray-400: #facc15;
+}
+
+.theme-light {
+  --bg-deep: #f8fafc;
+  --bg-dark: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --border-glass: rgba(15, 23, 42, 0.08);
+  --text-white: #0f172a;
+  --text-gray-300: #334155;
+  --text-gray-400: #475569;
+  --text-gray-500: #64748b;
+  --text-gray-600: #94a3b8;
+}
+
+/* Custom styles and premium glassmorphism classes */
+@layer base {
+  body {
+    background-color: var(--color-bg-deep);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+  }
+}
+
+/* Webkit Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+/* Glassmorphism panel helper */
+.glass-panel {
+  background: var(--color-bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border-glass);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(25, 25, 55, 0.7);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.15);
+}
+
+@property --glow-color {
+  syntax: '<color>';
+  initial-value: rgba(99, 102, 241, 0.15);
+  inherits: false;
+}
+
+/* Gradient background wrapper */
+.bg-gradient-mesh {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -10;
+  background: radial-gradient(circle at 10% 20%, var(--glow-color, rgba(99, 102, 241, 0.15)) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 45%),
+              var(--color-bg-deep);
+  pointer-events: none;
+  transition: --glow-color 1s ease-in-out, background 0.5s ease-in-out;
+}
+
+.theme-amoled .bg-gradient-mesh {
+  background: var(--color-bg-deep);
+}
+
+.theme-light .bg-gradient-mesh {
+  background: radial-gradient(circle at 10% 20%, var(--glow-color, rgba(99, 102, 241, 0.04)) 0%, transparent 45%),
+              radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.03) 0%, transparent 50%),
+              var(--color-bg-deep);
+}
+
+/* Custom shimmer animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Dynamic Floating Blobs Keyframe */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(40px, -60px) scale(1.12);
+  }
+  66% {
+    transform: translate(-30px, 40px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 22s infinite alternate ease-in-out;
+  will-change: transform;
+}
+
+.animation-delay-2000 {
+  animation-delay: 3s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 6s;
+}
+
+/* Hide scrollbar utility for navigation lists */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;  /* Firefox */
+}

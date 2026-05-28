@@ -1,0 +1,30 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "server/**",
+      "jiosaavn-api/**",
+      "symphony-android/**",
+      "symphony-desktop/**",
+      "Song Downloader App/**",
+      "Pocket Tube/**",
+      "E takies/**",
+      "**/*.exe",
+      "**/*.ps1",
+      "**/*.cmd",
+      "**/*.bat",
+      "**/*.sh",
+      "package.json",
+      "package-lock.json"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
