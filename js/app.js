@@ -4106,3 +4106,308 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkForSharedPlaylist();
 });
 
+/* ═══════════════════════════════════════════════════════════════════════
+   EXPANDED PLAYER — Mini → Full Screen Transition (Spotify Style)
+   ═══════════════════════════════════════════════════════════════════════ */
+(function initExpandedPlayer() {
+    // ── Element refs ──────────────────────────────────────────────────────
+    const expandedEl       = document.getElementById('expandedPlayer');
+    const closeBtn         = document.getElementById('expandedCloseBtn');
+    const bgBlur           = document.getElementById('expandedBgBlur');
+    const artEl            = document.getElementById('expandedArt');
+    const artGlow          = document.getElementById('expandedArtGlow');
+    const titleEl          = document.getElementById('expandedTitle');
+    const artistEl         = document.getElementById('expandedArtist');
+    const likeBtn          = document.getElementById('expandedLikeBtn');
+    const progressFill     = document.getElementById('expandedProgressFill');
+    const seekSlider       = document.getElementById('expandedSeekSlider');
+    const currentTimeEl    = document.getElementById('expandedCurrentTime');
+    const totalTimeEl      = document.getElementById('expandedTotalTime');
+    const playPauseBtn     = document.getElementById('expPlayPauseBtn');
+    const prevBtn          = document.getElementById('expPrevBtn');
+    const nextBtn          = document.getElementById('expNextBtn');
+    const shuffleBtn       = document.getElementById('expShuffleBtn');
+    const repeatBtn        = document.getElementById('expRepeatBtn');
+    const volumeSlider     = document.getElementById('expandedVolumeSlider');
+    const queueBtnExp      = document.getElementById('expQueueBtnExp');
+    const devicesBtnExp    = document.getElementById('expDevicesBtnExp');
+    const shareBtnExp      = document.getElementById('expShareBtnExp');
+
+    // Mini player elements (to mirror state from)
+    const miniTrackInfo    = document.querySelector('.player-bar .track-info');
+    const miniImg          = document.getElementById('playerImage');
+    const miniPlayPause    = document.getElementById('playPauseBtn');
+    const miniSeek         = document.getElementById('seekSlider');
+    const miniProgress     = document.getElementById('progressBar');
+    const miniVolume       = document.getElementById('volumeSlider');
+    const miniLike         = document.querySelector('.player-bar .like-btn');
+    const miniShuffle      = document.getElementById('shuffleBtn');
+    const miniRepeat       = document.getElementById('repeatBtn');
+    const miniQueue        = document.getElementById('queueBtn');
+    const miniDevices      = document.getElementById('devicesBtn');
+
+    let isOpen = false;
+
+    // ── Open / Close ──────────────────────────────────────────────────────
+    function openExpanded() {
+        syncState();
+        expandedEl.classList.add('open');
+        expandedEl.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        isOpen = true;
+    }
+
+    function closeExpanded() {
+        expandedEl.classList.remove('open');
+        expandedEl.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        isOpen = false;
+    }
+
+    // ── Sync all state from mini player ───────────────────────────────────
+    function syncState() {
+        // Song info
+        titleEl.textContent  = document.getElementById('playerTitle')?.textContent  || 'No track selected';
+        artistEl.textContent = document.getElementById('playerArtist')?.textContent || '—';
+
+        // Album art
+        const imgSrc = miniImg?.src || '';
+        if (imgSrc && !miniImg?.classList.contains('hidden')) {
+            artEl.src = imgSrc;
+            artEl.style.display = 'block';
+            updateBgColor(imgSrc);
+        } else {
+            artEl.style.display = 'none';
+            resetBgColor();
+        }
+
+        // Play/Pause icon
+        const miniIcon = miniPlayPause?.querySelector('i');
+        const expIcon  = playPauseBtn?.querySelector('i');
+        if (miniIcon && expIcon) {
+            expIcon.className = miniIcon.className;
+        }
+
+        // Progress
+        const pct = miniProgress ? miniProgress.style.width : '0%';
+        progressFill.style.width = pct;
+        seekSlider.value = parseFloat(pct) || 0;
+
+        // Time
+        currentTimeEl.textContent = document.getElementById('currentTimeDisplay')?.textContent || '0:00';
+        totalTimeEl.textContent   = document.getElementById('totalTimeDisplay')?.textContent   || '0:00';
+
+        // Volume
+        if (miniVolume) volumeSlider.value = miniVolume.value;
+
+        // Like state
+        const miniLikeIcon = miniLike?.querySelector('i');
+        const expLikeIcon  = likeBtn?.querySelector('i');
+        if (miniLikeIcon && expLikeIcon) {
+            expLikeIcon.className = miniLikeIcon.className;
+            likeBtn.classList.toggle('liked', miniLike?.classList.contains('liked'));
+        }
+
+        // Shuffle / Repeat active state
+        shuffleBtn?.classList.toggle('active', miniShuffle?.classList.contains('active'));
+        repeatBtn?.classList.toggle('active',  miniRepeat?.classList.contains('active'));
+    }
+
+    // ── Dynamic background color from album art ───────────────────────────
+    function updateBgColor(imgSrc) {
+        // Use a hidden canvas to sample the dominant color
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 8;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, 8, 8);
+                const d = ctx.getImageData(0, 0, 8, 8).data;
+                let r = 0, g = 0, b = 0;
+                for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i+1]; b += d[i+2]; }
+                const n = d.length / 4;
+                r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n);
+                bgBlur.style.backgroundImage = `
+                    radial-gradient(circle at 30% 25%, rgba(${r},${g},${b},0.55) 0%, transparent 60%),
+                    radial-gradient(circle at 70% 75%, rgba(${Math.round(r*0.6)},${Math.round(g*0.6)},${Math.round(b*1.2)},0.35) 0%, transparent 55%)`;
+                artGlow.style.background = `radial-gradient(circle, rgba(${r},${g},${b},0.6) 0%, transparent 70%)`;
+            } catch(e) {
+                resetBgColor();
+            }
+        };
+        img.onerror = resetBgColor;
+        img.src = imgSrc;
+    }
+
+    function resetBgColor() {
+        bgBlur.style.backgroundImage = '';
+        artGlow.style.background = 'radial-gradient(circle, rgba(209,54,246,0.4) 0%, transparent 70%)';
+    }
+
+    // ── Live progress sync (runs while open) ──────────────────────────────
+    let syncInterval = null;
+
+    function startLiveSync() {
+        if (syncInterval) return;
+        syncInterval = setInterval(() => {
+            if (!isOpen) return;
+            // Time
+            currentTimeEl.textContent = document.getElementById('currentTimeDisplay')?.textContent || '0:00';
+            totalTimeEl.textContent   = document.getElementById('totalTimeDisplay')?.textContent   || '0:00';
+            // Progress bar
+            const pct = miniProgress ? miniProgress.style.width : '0%';
+            progressFill.style.width = pct;
+            if (!_isSeeking) seekSlider.value = parseFloat(pct) || 0;
+            // Play/Pause icon
+            const miniIcon = miniPlayPause?.querySelector('i');
+            const expIcon  = playPauseBtn?.querySelector('i');
+            if (miniIcon && expIcon && miniIcon.className !== expIcon.className) {
+                expIcon.className = miniIcon.className;
+            }
+            // Like
+            const miniLikeIcon = miniLike?.querySelector('i');
+            const expLikeIcon  = likeBtn?.querySelector('i');
+            if (miniLikeIcon && expLikeIcon) {
+                expLikeIcon.className = miniLikeIcon.className;
+                likeBtn.classList.toggle('liked', miniLike?.classList.contains('liked'));
+            }
+        }, 500);
+    }
+
+    function stopLiveSync() {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
+
+    // ── Seek slider (expanded) ────────────────────────────────────────────
+    let _isSeeking = false;
+    seekSlider.addEventListener('input', () => {
+        _isSeeking = true;
+        progressFill.style.width = seekSlider.value + '%';
+    });
+    seekSlider.addEventListener('change', () => {
+        // Mirror seek to mini player
+        if (miniSeek) {
+            miniSeek.value = seekSlider.value;
+            miniSeek.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        _isSeeking = false;
+    });
+
+    // ── Volume (expanded) → mirror to mini ───────────────────────────────
+    volumeSlider.addEventListener('input', () => {
+        if (miniVolume) {
+            miniVolume.value = volumeSlider.value;
+            miniVolume.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    // ── Control buttons — delegate to mini player buttons ─────────────────
+    playPauseBtn?.addEventListener('click', () => miniPlayPause?.click());
+    prevBtn?.addEventListener('click',      () => document.getElementById('prevBtn')?.click());
+    nextBtn?.addEventListener('click',      () => document.getElementById('nextBtn')?.click());
+    shuffleBtn?.addEventListener('click',   () => {
+        miniShuffle?.click();
+        setTimeout(() => shuffleBtn.classList.toggle('active', miniShuffle?.classList.contains('active')), 50);
+    });
+    repeatBtn?.addEventListener('click',    () => {
+        miniRepeat?.click();
+        setTimeout(() => repeatBtn.classList.toggle('active', miniRepeat?.classList.contains('active')), 50);
+    });
+    likeBtn?.addEventListener('click',      () => miniLike?.click());
+    queueBtnExp?.addEventListener('click',  () => { closeExpanded(); setTimeout(() => miniQueue?.click(), 300); });
+    devicesBtnExp?.addEventListener('click',() => { closeExpanded(); setTimeout(() => miniDevices?.click(), 300); });
+    shareBtnExp?.addEventListener('click',  () => {
+        closeExpanded();
+        setTimeout(() => {
+            const shareBtn = document.getElementById('sharePlaylistBtn') || document.getElementById('shareLikedBtn');
+            shareBtn?.click();
+        }, 300);
+    });
+
+    // ── Open on mini player track-info click ──────────────────────────────
+    miniTrackInfo?.addEventListener('click', (e) => {
+        // Don't open if clicking like/radio buttons inside track-info
+        if (e.target.closest('.like-btn, .radio-btn')) return;
+        // Only open if a song is actually loaded
+        if (miniImg?.classList.contains('hidden')) return;
+        openExpanded();
+        startLiveSync();
+    });
+
+    // ── Close button ──────────────────────────────────────────────────────
+    closeBtn?.addEventListener('click', () => {
+        closeExpanded();
+        stopLiveSync();
+    });
+
+    // ── Keyboard: Escape to close ─────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen) {
+            closeExpanded();
+            stopLiveSync();
+        }
+    });
+
+    // ── Touch swipe-down to close ─────────────────────────────────────────
+    let touchStartY = 0;
+    let touchCurrentY = 0;
+
+    expandedEl.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    expandedEl.addEventListener('touchmove', (e) => {
+        touchCurrentY = e.touches[0].clientY;
+        const delta = touchCurrentY - touchStartY;
+        if (delta > 0) {
+            expandedEl.classList.add('swiping');
+            expandedEl.style.transform = `translateY(${delta}px)`;
+        }
+    }, { passive: true });
+
+    expandedEl.addEventListener('touchend', () => {
+        const delta = touchCurrentY - touchStartY;
+        expandedEl.classList.remove('swiping');
+        expandedEl.style.transform = '';
+        if (delta > 120) {
+            // Swiped down enough — close
+            closeExpanded();
+            stopLiveSync();
+        }
+        touchStartY = 0;
+        touchCurrentY = 0;
+    });
+
+    // ── Sync when song changes (player fires custom event) ────────────────
+    window.addEventListener('playerSongChanged', () => {
+        if (isOpen) {
+            setTimeout(syncState, 100); // small delay so DOM updates first
+        }
+    });
+
+    // Also watch for playerImage src changes
+    const imgObserver = new MutationObserver(() => {
+        if (isOpen && miniImg?.src) {
+            artEl.src = miniImg.src;
+            updateBgColor(miniImg.src);
+        }
+    });
+    if (miniImg) {
+        imgObserver.observe(miniImg, { attributes: true, attributeFilter: ['src', 'class'] });
+    }
+
+    // ── Watch for song title/artist changes ───────────────────────────────
+    const titleObserver = new MutationObserver(() => {
+        if (isOpen) {
+            titleEl.textContent  = document.getElementById('playerTitle')?.textContent  || '';
+            artistEl.textContent = document.getElementById('playerArtist')?.textContent || '';
+        }
+    });
+    const playerTitleEl = document.getElementById('playerTitle');
+    if (playerTitleEl) titleObserver.observe(playerTitleEl, { childList: true, characterData: true, subtree: true });
+
+})();
+

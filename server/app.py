@@ -55,15 +55,22 @@ async def add_private_network_headers(request: Request, call_next):
     return response
 
 # CORS Configuration
+# NOTE: After Railway deployment, replace RAILWAY_BACKEND_URL placeholder with actual URL
+RAILWAY_BACKEND_URL = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+ALLOWED_ORIGINS = [
+    "https://sound-wave-92614.web.app",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:5000",
+    "http://localhost:5000",
+]
+if RAILWAY_BACKEND_URL:
+    ALLOWED_ORIGINS.append(f"https://{RAILWAY_BACKEND_URL}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://sound-wave-92614.web.app",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://127.0.0.1:5000",
-        "http://localhost:5000"
-    ],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.railway\.app",  # Allow all Railway subdomains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -622,4 +629,6 @@ async def stream_song(id: str):
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=5000, reload=True)
+    port = int(os.environ.get("PORT", 5000))
+    host = "0.0.0.0" if os.environ.get("RAILWAY_ENVIRONMENT") else "127.0.0.1"
+    uvicorn.run("app:app", host=host, port=port, reload=(host == "127.0.0.1"))

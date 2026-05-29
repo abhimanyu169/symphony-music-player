@@ -316,7 +316,100 @@
         </div>
     </div>
 
-    <!-- HTML5 Audio Element -->
+    <!-- ═══════════════════════════════════════════════════════════
+         EXPANDED FULL-SCREEN PLAYER (Spotify/YT Music Style)
+         Slides up from bottom on mini-player click
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="expandedPlayer" class="expanded-player" aria-hidden="true">
+
+        <!-- Blurred dynamic background (album art color) -->
+        <div class="expanded-bg-blur" id="expandedBgBlur"></div>
+
+        <!-- Top bar: drag handle + close -->
+        <div class="expanded-topbar">
+            <div class="expanded-drag-handle"></div>
+            <button class="expanded-close-btn" id="expandedCloseBtn" aria-label="Minimize player">
+                <i class='bx bx-chevron-down'></i>
+            </button>
+        </div>
+
+        <!-- Main content -->
+        <div class="expanded-content">
+
+            <!-- Album Art -->
+            <div class="expanded-art-container">
+                <img src="" alt="Album Art" id="expandedArt" class="expanded-art">
+                <div class="expanded-art-glow" id="expandedArtGlow"></div>
+            </div>
+
+            <!-- Song Info + Like -->
+            <div class="expanded-song-row">
+                <div class="expanded-song-info">
+                    <div class="expanded-song-title" id="expandedTitle">No track selected</div>
+                    <div class="expanded-song-artist" id="expandedArtist">—</div>
+                </div>
+                <button class="expanded-like-btn" id="expandedLikeBtn" aria-label="Like song">
+                    <i class='bx bx-heart'></i>
+                </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="expanded-progress-area">
+                <div class="expanded-progress-bar-wrap" id="expandedProgressWrap">
+                    <div class="expanded-progress-fill" id="expandedProgressFill"></div>
+                    <input type="range" min="0" max="100" value="0"
+                           class="expanded-seek-slider" id="expandedSeekSlider">
+                </div>
+                <div class="expanded-time-row">
+                    <span id="expandedCurrentTime">0:00</span>
+                    <span id="expandedTotalTime">0:00</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="expanded-controls">
+                <button class="exp-ctrl-btn" id="expShuffleBtn" title="Shuffle">
+                    <i class='bx bx-shuffle'></i>
+                </button>
+                <button class="exp-ctrl-btn exp-prev" id="expPrevBtn">
+                    <i class='bx bx-skip-previous'></i>
+                </button>
+                <button class="exp-play-btn" id="expPlayPauseBtn">
+                    <i class='bx bx-play'></i>
+                </button>
+                <button class="exp-ctrl-btn exp-next" id="expNextBtn">
+                    <i class='bx bx-skip-next'></i>
+                </button>
+                <button class="exp-ctrl-btn" id="expRepeatBtn" title="Repeat">
+                    <i class='bx bx-repeat'></i>
+                </button>
+            </div>
+
+            <!-- Volume + Extra -->
+            <div class="expanded-extras">
+                <div class="expanded-volume-row">
+                    <i class='bx bx-volume-low' id="expandedVolIconLow"></i>
+                    <input type="range" min="0" max="100" value="100"
+                           class="expanded-volume-slider" id="expandedVolumeSlider">
+                    <i class='bx bx-volume-full' id="expandedVolIconFull"></i>
+                </div>
+                <div class="expanded-action-row">
+                    <button class="exp-action-btn" id="expQueueBtnExp" title="Queue">
+                        <i class='bx bx-list-ul'></i>
+                    </button>
+                    <button class="exp-action-btn" id="expDevicesBtnExp" title="Quality">
+                        <i class='bx bx-devices'></i>
+                    </button>
+                    <button class="exp-action-btn" id="expShareBtnExp" title="Share">
+                        <i class='bx bx-share-alt'></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
     <audio id="audioPlayer"></audio>
 
     <!-- Firebase Config Modal -->

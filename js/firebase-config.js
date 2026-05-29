@@ -2,7 +2,18 @@
  * Symphony Python Auth & Sync Manager (Formerly Firebase Config)
  * Handles user Authentication (Login/Signup) and Library Syncing
  * via Python FastAPI Backend and Local SQLite Database.
+ *
+ * Backend URL Strategy:
+ *   - Local dev (127.0.0.1 / localhost): uses local backend http://127.0.0.1:5000
+ *   - Firebase Hosting / any remote origin: uses deployed Railway backend
  */
+
+// ── Backend URL (mirrors api.js logic) ────────────────────────────────────
+const _DEPLOYED_BACKEND = 'https://symphony-backend-production.up.railway.app';
+const _LOCAL_BACKEND    = 'http://127.0.0.1:5000';
+const _FM_IS_REMOTE     = !['localhost', '127.0.0.1'].includes(window.location.hostname);
+const BACKEND_URL       = _FM_IS_REMOTE ? _DEPLOYED_BACKEND : _LOCAL_BACKEND;
+
 const firebaseManager = (() => {
     let currentUser = null;
     let isInitialized = false;
@@ -14,7 +25,7 @@ const firebaseManager = (() => {
 
     async function initialize() {
         isInitialized = true;
-        console.log('Symphony Auth Manager initialized.');
+        console.log(`Symphony Auth Manager initialized. Backend: ${BACKEND_URL}`);
         
         // Restore session on startup if JWT token is stored
         const token = localStorage.getItem('symphonyJwtToken');
@@ -22,7 +33,7 @@ const firebaseManager = (() => {
             try {
                 const controller = new AbortController();
                 setTimeout(() => controller.abort(), 4000);
-                const res = await fetch('http://127.0.0.1:5000/api/auth/verify', {
+                const res = await fetch(`${BACKEND_URL}/api/auth/verify`, {
                     headers: { 'Authorization': `Bearer ${token}` },
                     signal: controller.signal
                 });
@@ -64,7 +75,7 @@ const firebaseManager = (() => {
         try {
             const controller = new AbortController();
             setTimeout(() => controller.abort(), 8000);
-            const res = await fetch('http://127.0.0.1:5000/api/auth/signup', {
+            const res = await fetch(`${BACKEND_URL}/api/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: displayName, email: email, password: password }),
@@ -92,7 +103,7 @@ const firebaseManager = (() => {
         try {
             const controller = new AbortController();
             setTimeout(() => controller.abort(), 8000);
-            const res = await fetch('http://127.0.0.1:5000/api/auth/login', {
+            const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email, password: password }),
@@ -194,7 +205,7 @@ const firebaseManager = (() => {
 
     async function generateShareLink(playlistTitle, songsList) {
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/playlist/share', {
+            const res = await fetch(`${BACKEND_URL}/api/playlist/share`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: playlistTitle, songs: songsList })
@@ -212,7 +223,7 @@ const firebaseManager = (() => {
 
     async function fetchSharedPlaylist(shareId) {
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/playlist/share/${shareId}`);
+            const res = await fetch(`${BACKEND_URL}/api/playlist/share/${shareId}`);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.detail || 'Failed to fetch shared playlist.');

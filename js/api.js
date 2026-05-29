@@ -1,14 +1,31 @@
 /**
  * api.js - API Integration
- * Supports both public JioSaavn API and local Python YT Music API.
- * Gracefully falls back to JioSaavn-only mode when local backend is unreachable.
+ * Supports both public JioSaavn API and Python YT Music API (local or deployed).
+ * - Local dev (127.0.0.1): tries local backend first, falls back to deployed.
+ * - Firebase Hosting: uses deployed Railway backend directly.
+ * - If all backends fail: falls back to JioSaavn-only mode.
  */
 
 const JIOSAAVN_API_BASE = 'https://saavn.sumit.co/api';
-// Try to auto-detect backend URL: local first, then optional env override
-const YTMUSIC_API_BASE = 'http://127.0.0.1:5000/api/yt';
 
-// Helper function to perform fetch requests with a custom timeout
+// ── Backend URL Configuration ──────────────────────────────────────────────
+// Deployed Railway backend — works from Firebase Hosting + any device.
+// Will be updated automatically after Railway deployment.
+const DEPLOYED_BACKEND = 'https://symphony-backend-production.up.railway.app';
+
+// Local dev backend (only reachable from localhost)
+const LOCAL_BACKEND = 'http://127.0.0.1:5000';
+
+// Detect if running from a remote origin (Firebase Hosting, Android app, etc.)
+const _IS_REMOTE_ORIGIN = !['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+// When on remote origin, always use deployed backend.
+// When local, prefer local backend (faster), fall back to deployed.
+const YTMUSIC_API_BASE = _IS_REMOTE_ORIGIN
+    ? `${DEPLOYED_BACKEND}/api/yt`
+    : `${LOCAL_BACKEND}/api/yt`;
+
+// ── Fetch Helper ──────────────────────────────────────────────────────────
 async function fetchWithTimeout(resource, options = {}) {
     const { timeout = 8000 } = options;
     const controller = new AbortController();
@@ -26,32 +43,56 @@ async function fetchWithTimeout(resource, options = {}) {
     }
 }
 
-// Detect if running from a remote origin (Firebase Hosting etc.)
-// From remote HTTPS origins, Chrome always blocks loopback requests (Private Network Access policy).
-// Skip probe entirely to avoid CORS console errors and use JioSaavn directly.
-const _IS_REMOTE_ORIGIN = !['localhost', '127.0.0.1'].includes(window.location.hostname);
-
-// Backend availability state (auto-detected, cached for 30 seconds)
-let _backendAvailable = _IS_REMOTE_ORIGIN ? false : null;
-let _backendCheckTime = _IS_REMOTE_ORIGIN ? Infinity : 0;
+// ── Backend Availability Check ────────────────────────────────────────────
+// Cache backend availability for 30 seconds to avoid repeated probes.
+let _backendAvailable = null;
+let _backendCheckTime = 0;
 const BACKEND_CHECK_TTL = 30000; // 30 seconds
 
+// Flag: set to true once the Railway backend is actually deployed
+// Until then, remote origin always uses JioSaavn directly (no probe delay)
+const _RAILWAY_DEPLOYED = false; // ← Set to true after Railway deploy
+
 async function checkBackendAvailable() {
-    // Never probe from remote origin - Chrome blocks it anyway
-    if (_IS_REMOTE_ORIGIN) return false;
+    // On remote origin: only probe if Railway is actually deployed
+    if (_IS_REMOTE_ORIGIN && !_RAILWAY_DEPLOYED) {
+        _backendAvailable = false;
+        return false;
+    }
 
     const now = Date.now();
     if (_backendAvailable !== null && (now - _backendCheckTime) < BACKEND_CHECK_TTL) {
         return _backendAvailable;
     }
+
+    // On remote origin with Railway deployed: probe Railway backend
+    // On local: probe local backend first
+    const probeUrl = _IS_REMOTE_ORIGIN
+        ? `${DEPLOYED_BACKEND}/api/yt/search?query=test&limit=1`
+        : `${LOCAL_BACKEND}/api/yt/search?query=test&limit=1`;
+
     try {
-        const res = await fetchWithTimeout(`http://127.0.0.1:5000/api/yt/search?query=test&limit=1`, { timeout: 3000 });
+        const res = await fetchWithTimeout(probeUrl, { timeout: 2000 });
         _backendAvailable = res.ok;
     } catch (e) {
-        _backendAvailable = false;
+        // Local failed — try deployed backend as fallback (only in local dev)
+        if (!_IS_REMOTE_ORIGIN && _RAILWAY_DEPLOYED) {
+            try {
+                const res = await fetchWithTimeout(`${DEPLOYED_BACKEND}/api/yt/search?query=test&limit=1`, { timeout: 3000 });
+                _backendAvailable = res.ok;
+                if (_backendAvailable) {
+                    console.log('[Symphony] Local backend offline — using deployed Railway backend.');
+                }
+            } catch {
+                _backendAvailable = false;
+            }
+        } else {
+            _backendAvailable = false;
+        }
     }
+
     _backendCheckTime = Date.now();
-    console.log(`[Symphony] Local backend ${_backendAvailable ? 'available' : 'unavailable - using JioSaavn fallback'}`);
+    console.log(`[Symphony] Backend: ${_backendAvailable ? (_IS_REMOTE_ORIGIN ? 'Railway deployed' : 'local') : 'unavailable — JioSaavn only'}`);
     return _backendAvailable;
 }
 
@@ -183,11 +224,11 @@ const api = {
             return results.filter(song => lowerLangs.includes((song.language || '').toLowerCase()));
         };
 
-        // 1. Try local Python backend (preferred – combines both APIs)
+        // 1. Try backend (local in dev, Railway-deployed on Firebase Hosting)
         const backendOnline = await checkBackendAvailable();
         if (backendOnline) {
             try {
-                const res = await fetchWithTimeout(`http://127.0.0.1:5000/api/yt/search?query=${encodeURIComponent(refinedQuery)}&page=${page}&limit=${limit}`);
+                const res = await fetchWithTimeout(`${YTMUSIC_API_BASE}/search?query=${encodeURIComponent(refinedQuery)}&page=${page}&limit=${limit}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success) {
@@ -369,7 +410,7 @@ const api = {
                     }
                 }
                 if (!query) return [];
-                const res = await fetchWithTimeout(`http://127.0.0.1:5000/api/yt/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+                const res = await fetchWithTimeout(`${YTMUSIC_API_BASE}/search?query=${encodeURIComponent(query)}&limit=${limit}`);
                 const data = await res.json();
                 if (data.success) return (data.data.results || []).map(s => ({ ...s, source: 'ytmusic' }));
                 return [];

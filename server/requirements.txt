@@ -1,10 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
 aiosqlite
 httpx
 redis
 bcrypt
 pyjwt
-pydantic
+pydantic[email]
+email-validator
 ytmusicapi
 yt-dlp

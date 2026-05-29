@@ -123,6 +123,11 @@ const player = (() => {
         if (activeCard) activeCard.classList.add('active');
         
         updateLikeButtonState(song);
+
+        // Notify expanded player that song has changed
+        window.dispatchEvent(new CustomEvent('playerSongChanged', {
+            detail: { song, imgUrl, title: cleanName, artist: cleanArtist }
+        }));
     }
 
     function getLikedSongs() {
