@@ -43,9 +43,18 @@ async def add_private_network_headers(request: Request, call_next):
     response.headers["Access-Control-Allow-Private-Network"] = "true"
     return response
 
-# CORS Configuration
-# NOTE: After Railway deployment, replace RAILWAY_BACKEND_URL placeholder with actual URL
-RAILWAY_BACKEND_URL = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+# CORS Configuration & Self URL Resolution
+BACKEND_URL = os.environ.get("BACKEND_URL", "")
+RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL", "")
+RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+
+if RENDER_URL:
+    RENDER_URL = RENDER_URL.rstrip('/')
+if RAILWAY_DOMAIN and not RAILWAY_DOMAIN.startswith("http"):
+    RAILWAY_DOMAIN = f"https://{RAILWAY_DOMAIN}"
+
+SELF_URL = BACKEND_URL or RENDER_URL or RAILWAY_DOMAIN or "http://127.0.0.1:5000"
+
 ALLOWED_ORIGINS = [
     "https://sound-wave-92614.web.app",
     "http://127.0.0.1:5500",
@@ -53,13 +62,13 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:5000",
     "http://localhost:5000",
 ]
-if RAILWAY_BACKEND_URL:
-    ALLOWED_ORIGINS.append(f"https://{RAILWAY_BACKEND_URL}")
+if SELF_URL and SELF_URL.startswith("http") and SELF_URL != "http://127.0.0.1:5000":
+    ALLOWED_ORIGINS.append(SELF_URL)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.railway\.app",  # Allow all Railway subdomains
+    allow_origin_regex=r"https://.*\.railway\.app|https://.*\.onrender\.com",  # Allow all Railway & Render subdomains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,11 +79,6 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "symphony.db")
 JWT_SECRET = os.environ.get("JWT_SECRET", "symphony-super-secret-key-1234567890-xyz")
 JWT_ALGORITHM = "HS256"
 JIASAVN_API_BASE = "https://saavn.sumit.co/api"
-
-# Self URL for building stream links (set SELF_URL env var on Railway)
-# Railway provides RAILWAY_PUBLIC_DOMAIN automatically
-_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
-SELF_URL = f"https://{_railway_domain}" if _railway_domain else "http://127.0.0.1:5000"
 
 # Initialize YTMusic (unauthenticated - works for public search)
 try:
