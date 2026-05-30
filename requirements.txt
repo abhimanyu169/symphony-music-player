@@ -2,9 +2,9 @@ fastapi
 uvicorn
 aiosqlite
 httpx
-redis
 bcrypt
 pyjwt
 pydantic
 ytmusicapi
 yt-dlp
+

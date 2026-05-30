@@ -3,8 +3,6 @@ import re
 import time
 import json
 import asyncio
-import hashlib
-import sqlite3
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -16,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from ytmusicapi import YTMusic
 import yt_dlp
-import redis
 import httpx
 import jwt
 import bcrypt
@@ -26,15 +23,7 @@ import bcrypt
 async def lifespan(app: FastAPI):
     # Initialize DB on startup
     await init_db()
-    # Initialize Redis connection
-    init_redis()
     yield
-    # Shutdown logic
-    if redis_client:
-        try:
-            redis_client.close()
-        except:
-            pass
 
 app = FastAPI(title="Symphony API Backend", version="2.0.0", lifespan=lifespan)
 
@@ -80,23 +69,23 @@ app.add_middleware(
 DB_PATH = os.path.join(os.path.dirname(__file__), "symphony.db")
 JWT_SECRET = os.environ.get("JWT_SECRET", "symphony-super-secret-key-1234567890-xyz")
 JWT_ALGORITHM = "HS256"
-JIOSAAVN_API_BASE = "https://saavn.sumit.co/api"
+JIASAVN_API_BASE = "https://saavn.sumit.co/api"
 
-# Initialize YTMusic in-thread wrapper
-ytmusic = YTMusic()
+# Self URL for building stream links (set SELF_URL env var on Railway)
+# Railway provides RAILWAY_PUBLIC_DOMAIN automatically
+_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+SELF_URL = f"https://{_railway_domain}" if _railway_domain else "http://127.0.0.1:5000"
 
-# Redis Setup & Connection Check
-redis_client: Optional[redis.Redis] = None
+# Initialize YTMusic (unauthenticated - works for public search)
+try:
+    ytmusic = YTMusic()
+    print("YTMusic initialized successfully.")
+except Exception as e:
+    print(f"YTMusic init failed: {e}")
+    ytmusic = None
 
-def init_redis():
-    global redis_client
-    try:
-        redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-        redis_client.ping()
-        print("Connected to Redis successfully.")
-    except Exception as e:
-        print(f"Redis is not available ({e}). Using local in-memory fallback cache.")
-        redis_client = None
+# In-Memory Cache (Redis-free - works on Railway without add-ons)
+redis_client = None  # Always None - we use local_memory_cache only
 
 # Local In-Memory Cache Fallback
 local_memory_cache = {}
@@ -533,8 +522,9 @@ async def search_songs(query: str, page: int = 0, limit: int = 24):
     
     # 2.1 Fetch YouTube Music (YTMusicapi is blocking, so run in standard threadpool)
     async def fetch_yt_search():
+        if not ytmusic:
+            return []
         try:
-            # run_in_threadpool / asyncio.to_thread makes it non-blocking
             results = await asyncio.to_thread(ytmusic.search, query, filter="songs", limit=limit)
             formatted = []
             for item in results:
@@ -550,7 +540,7 @@ async def search_songs(query: str, page: int = 0, limit: int = 24):
                     "artists": {"primary": artists},
                     "album": {"name": item.get('album', {}).get('name') if item.get('album') else None},
                     "duration": item.get('duration_seconds'),
-                    "downloadUrl": [{"quality": "320kbps", "url": f"http://127.0.0.1:5000/api/yt/stream?id={video_id}"}],
+                    "downloadUrl": [{"quality": "320kbps", "url": f"{SELF_URL}/api/yt/stream?id={video_id}"}],
                     "source": "ytmusic"
                 })
             return formatted
