@@ -9,7 +9,7 @@
  */
 
 // ── Backend URL (mirrors api.js logic) ────────────────────────────────────
-const _DEPLOYED_BACKEND = 'https://symphony-backend-production.up.railway.app';
+const _DEPLOYED_BACKEND = 'https://symphony-music-player.onrender.com';
 const _LOCAL_BACKEND    = 'http://127.0.0.1:5000';
 const _FM_IS_REMOTE     = !['localhost', '127.0.0.1'].includes(window.location.hostname);
 const BACKEND_URL       = _FM_IS_REMOTE ? _DEPLOYED_BACKEND : _LOCAL_BACKEND;
@@ -146,7 +146,7 @@ const firebaseManager = (() => {
         const token = localStorage.getItem('symphonyJwtToken');
         if (!token || !currentUser) return;
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/library/sync', {
+            const res = await fetch(`${BACKEND_URL}/api/library/sync`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ const firebaseManager = (() => {
         const token = localStorage.getItem('symphonyJwtToken');
         if (!token || !currentUser) return;
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/library/sync', {
+            const res = await fetch(`${BACKEND_URL}/api/library/sync`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {

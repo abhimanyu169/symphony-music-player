@@ -11,7 +11,7 @@ const JIOSAAVN_API_BASE = 'https://saavn.sumit.co/api';
 // ── Backend URL Configuration ──────────────────────────────────────────────
 // Deployed Railway backend — works from Firebase Hosting + any device.
 // Will be updated automatically after Railway deployment.
-const DEPLOYED_BACKEND = 'https://symphony-backend-production.up.railway.app';
+const DEPLOYED_BACKEND = 'https://symphony-music-player.onrender.com';
 
 // Local dev backend (only reachable from localhost)
 const LOCAL_BACKEND = 'http://127.0.0.1:5000';
@@ -49,9 +49,9 @@ let _backendAvailable = null;
 let _backendCheckTime = 0;
 const BACKEND_CHECK_TTL = 30000; // 30 seconds
 
-// Flag: set to true once the Railway backend is actually deployed
+// Flag: set to true once the backend is actually deployed
 // Until then, remote origin always uses JioSaavn directly (no probe delay)
-const _RAILWAY_DEPLOYED = false; // ← Set to true after Railway deploy
+const _RAILWAY_DEPLOYED = true; // ← Set to true since Render backend is deployed
 
 async function checkBackendAvailable() {
     // On remote origin: only probe if Railway is actually deployed
