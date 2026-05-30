@@ -1633,20 +1633,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Auth Modal Open/Close
     if (authBtn) {
         authBtn.addEventListener('click', () => {
-            if (!firebaseManager.isConfigured()) {
-                alert('⚠️ Please configure Firebase Cloud Sync in the profile settings first to enable accounts.');
-                if (btnDropdownCloud) btnDropdownCloud.click();
-                return;
-            }
+            // BUG FIX: Removed false Firebase isConfigured() guard that blocked auth modal.
+            // firebaseManager is our custom SQLite backend manager — it's always ready after DOMContentLoaded.
             authStatus.textContent = '';
+            authStatus.className = 'status-msg';
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+            loginTabBtn.classList.add('active');
+            signupTabBtn.classList.remove('active');
             authModal.classList.remove('hidden');
             
             // Reset Phone Authentication state on modal open
             if (phoneInputSection && otpInputSection) {
                 phoneInputSection.classList.remove('hidden');
                 otpInputSection.classList.add('hidden');
-                phoneNumberInput.value = '';
-                otpCodeInput.value = '';
+                if (phoneNumberInput) phoneNumberInput.value = '';
+                if (otpCodeInput) otpCodeInput.value = '';
             }
         });
     }
@@ -1777,10 +1779,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            authStatus.className = 'status-msg';
-            authStatus.textContent = '⌛ Logging in...';
             const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPassword').value;
+
+            // FIX: Frontend validation before hitting backend
+            if (!email || !pass) {
+                authStatus.className = 'status-msg error error-msg';
+                authStatus.textContent = '❌ Please enter both email and password.';
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                authStatus.className = 'status-msg error error-msg';
+                authStatus.textContent = '❌ Please enter a valid email address.';
+                return;
+            }
+
+            authStatus.className = 'status-msg';
+            authStatus.textContent = '⌛ Logging in...';
             try {
                 await firebaseManager.logIn(email, pass);
                 authStatus.className = 'status-msg success';
@@ -1792,15 +1807,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 console.error("Login error details:", err);
                 authStatus.className = 'status-msg error error-msg';
-                let msg = err.message;
-                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                    msg = 'Invalid email or password.';
-                } else if (err.code === 'auth/invalid-credential') {
-                    msg = 'Invalid email or password credentials.';
-                } else if (err.code === 'auth/invalid-email') {
-                    msg = 'The email address is badly formatted.';
+                // FIX: Parse backend error messages properly (no Firebase err.code here)
+                let msg = err.message || 'Login failed. Please try again.';
+                if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials') || msg.toLowerCase().includes('password')) {
+                    msg = 'Invalid email or password. Please try again.';
+                } else if (msg.toLowerCase().includes('not reachable') || msg.toLowerCase().includes('fetch')) {
+                    msg = 'Server is not reachable. Please try again later.';
                 }
-                authStatus.textContent = '❌ Error: ' + msg;
+                authStatus.textContent = '❌ ' + msg;
             }
         });
     }
@@ -1809,15 +1823,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (signupForm) {
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            authStatus.className = 'status-msg';
-            authStatus.textContent = '⌛ Registering account...';
             const name = document.getElementById('signupName').value.trim();
             const email = document.getElementById('signupEmail').value.trim();
             const pass = document.getElementById('signupPassword').value;
+
+            // FIX: Frontend validation
+            if (!name || name.length < 2) {
+                authStatus.className = 'status-msg error error-msg';
+                authStatus.textContent = '❌ Please enter your full name (at least 2 characters).';
+                return;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                authStatus.className = 'status-msg error error-msg';
+                authStatus.textContent = '❌ Please enter a valid email address.';
+                return;
+            }
+            if (!pass || pass.length < 6) {
+                authStatus.className = 'status-msg error error-msg';
+                authStatus.textContent = '❌ Password must be at least 6 characters long.';
+                return;
+            }
+
+            authStatus.className = 'status-msg';
+            authStatus.textContent = '⌛ Creating your account...';
             try {
                 await firebaseManager.signUp(email, pass, name);
                 authStatus.className = 'status-msg success';
-                authStatus.textContent = '🎉 Account created and logged in!';
+                authStatus.textContent = '🎉 Account created! Welcome to Symphony!';
                 setTimeout(() => {
                     authModal.classList.add('hidden');
                     openPreferencesModal(true);
@@ -1825,17 +1857,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 console.error("Signup error details:", err);
                 authStatus.className = 'status-msg error error-msg';
-                let msg = err.message;
-                if (err.code === 'auth/operation-not-allowed') {
-                    msg = 'Email/Password sign-in is disabled in your Firebase console. Please go to Firebase Console > Authentication > Sign-in method, and enable Email/Password.';
-                } else if (err.code === 'auth/email-already-in-use') {
-                    msg = 'This email address is already in use by another account.';
-                } else if (err.code === 'auth/weak-password') {
-                    msg = 'The password must be 6 characters long or more.';
-                } else if (err.code === 'auth/invalid-email') {
-                    msg = 'The email address is badly formatted.';
+                // FIX: Parse backend error messages properly (no Firebase err.code)
+                let msg = err.message || 'Signup failed. Please try again.';
+                if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('already in use')) {
+                    msg = 'An account with this email already exists. Please log in instead.';
+                } else if (msg.toLowerCase().includes('not reachable') || msg.toLowerCase().includes('fetch')) {
+                    msg = 'Server is not reachable. Please try again later.';
                 }
-                authStatus.textContent = '❌ Error: ' + msg;
+                authStatus.textContent = '❌ ' + msg;
             }
         });
     }

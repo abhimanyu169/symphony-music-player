@@ -74,7 +74,7 @@ const firebaseManager = (() => {
     async function signUp(email, password, displayName) {
         try {
             const controller = new AbortController();
-            setTimeout(() => controller.abort(), 8000);
+            setTimeout(() => controller.abort(), 10000);
             const res = await fetch(`${BACKEND_URL}/api/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -83,15 +83,18 @@ const firebaseManager = (() => {
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
-                throw new Error(data.detail || 'Signup failed.');
+                throw new Error(data.detail || 'Signup failed. Please try again.');
             }
             localStorage.setItem('symphonyJwtToken', data.token);
             currentUser = data.user;
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: currentUser } }));
             return currentUser;
         } catch (err) {
-            if (err.name === 'AbortError' || err.message === 'Failed to fetch') {
-                throw new Error('Server is not reachable. Please run the local backend to use account features.');
+            if (err.name === 'AbortError') {
+                throw new Error('Request timed out. Please check your internet connection and try again.');
+            }
+            if (err.message === 'Failed to fetch') {
+                throw new Error('Server is not reachable. Please try again later.');
             }
             console.error('Signup error:', err);
             throw err;
@@ -102,7 +105,7 @@ const firebaseManager = (() => {
     async function logIn(email, password) {
         try {
             const controller = new AbortController();
-            setTimeout(() => controller.abort(), 8000);
+            setTimeout(() => controller.abort(), 10000);
             const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -118,13 +121,17 @@ const firebaseManager = (() => {
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: currentUser } }));
             return currentUser;
         } catch (err) {
-            if (err.name === 'AbortError' || err.message === 'Failed to fetch') {
-                throw new Error('Server is not reachable. Please run the local backend to use account features.');
+            if (err.name === 'AbortError') {
+                throw new Error('Request timed out. Please check your internet connection and try again.');
+            }
+            if (err.message === 'Failed to fetch') {
+                throw new Error('Server is not reachable. Please try again later.');
             }
             console.error('Login error:', err);
             throw err;
         }
     }
+
 
     async function signInWithGoogle() {
         throw new Error('Google Sign-In is only supported in Firebase cloud mode. Please use Email & Password.');
