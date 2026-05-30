@@ -507,6 +507,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Decode HTML entities from API responses (e.g. &quot; -> ")
     function decodeHtml(str) {
         if (!str) return '';
+        const txt = document.createElement('textarea');
         txt.innerHTML = str;
         return txt.value;
     }
@@ -1290,7 +1291,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!btn) return;
         const observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && !btn.classList.contains('hidden') && btn.style.display !== 'none' && !btn.disabled && btn.textContent !== 'Loading...') {
-                console.log('Infinite scroll: auto-loading more items...');
                 btn.click();
             }
         }, {
@@ -3029,17 +3029,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // ── BOLLYWOOD ────────────────────────────────────────────────────────
             { title: 'Arijit Singh Jukebox 🎤', subtitle: 'Soulful romantic masterpieces by Arijit Singh', query: 'Arijit Singh Best Songs Playlist', img: _svg('#c94b4b','#4b134f','🎤'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
-            { title: 'Bollywood Romantic Hits 💕', subtitle: 'Most beloved love songs from Hindi cinema', query: 'Bollywood Romantic Love Songs Hits', img: _svg('#ff758c','#ff7eb3','💕'), cat: 'bollywood', catLabel: '💕 ROMANCE', lang: 'Hindi', langEmoji: '🇮🇳' },
-            { title: 'Shah Rukh Khan OST 🌟', subtitle: 'Iconic soundtrack collection from SRK films', query: 'Shah Rukh Khan Movie Songs Best Hits', img: _svg('#2c3e50','#fd746c','🌟'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Bollywood Romantic Hits 💕', subtitle: "Most beloved love songs from Hindi cinema", query: 'Bollywood Romantic Love Songs Hits', img: _svg('#ff758c','#ff7eb3','💕'), cat: 'bollywood', catLabel: '💕 ROMANCE', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Shah Rukh Khan OST 🌟', subtitle: "Iconic soundtrack collection from SRK films", query: 'Shah Rukh Khan Movie Songs Best Hits', img: _svg('#2c3e50','#fd746c','🌟'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
             { title: 'Bollywood Party Night 🪩', subtitle: 'High energy Bollywood dance floor anthems', query: 'Bollywood Party Dance Songs 2024 2025', img: _svg('#8b5cf6','#3b82f6','🪩'), cat: 'bollywood', catLabel: '🪩 PARTY', lang: 'Hindi', langEmoji: '🇮🇳' },
             { title: 'A.R. Rahman Classics 🎼', subtitle: 'Timeless masterpieces from the Mozart of Madras', query: 'AR Rahman Best Songs Collection Classics', img: _svg('#1d4350','#a43931','🎼'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD' },
-            { title: 'Atif Aslam Best of 🎙️', subtitle: 'Heartfelt vocals from the Pakistani Bollywood legend', query: 'Atif Aslam Best Bollywood Songs', img: _svg('#355c7d','#6c5b7b','🎙️'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
-            { title: 'Neha Kakkar Party Mix 🎉', subtitle: 'Peppy party hits by Bollywood's party queen', query: 'Neha Kakkar Best Party Songs', img: _svg('#fc5c7d','#6a3093','🎉'), cat: 'bollywood', catLabel: '🪩 PARTY', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Atif Aslam Best of 🎙️', subtitle: "Heartfelt vocals from the Pakistani Bollywood legend", query: 'Atif Aslam Best Bollywood Songs', img: _svg('#355c7d','#6c5b7b','🎙️'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Neha Kakkar Party Mix 🎉', subtitle: "Peppy party hits by Bollywood's party queen", query: 'Neha Kakkar Best Party Songs', img: _svg('#fc5c7d','#6a3093','🎉'), cat: 'bollywood', catLabel: '🪩 PARTY', lang: 'Hindi', langEmoji: '🇮🇳' },
             { title: 'Sonu Nigam Golden Hits ✨', subtitle: 'Classic and modern gems by Sonu Nigam', query: 'Sonu Nigam Best Songs Hindi', img: _svg('#daa520','#654321','✨'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
 
             // ── REGIONAL ─────────────────────────────────────────────────────────
             { title: 'Kollywood Kuthu 🛕', subtitle: 'Tamil foot-tapping dance hits and folk beats', query: 'Tamil Kuthu Songs Best Hits Vijay Thalapathy', img: _svg('#f7971e','#ffd200','🛕'), cat: 'regional', catLabel: '🗺️ TAMIL', lang: 'Tamil', langEmoji: '🛕' },
-            { title: 'Tollywood Blockbusters 🌊', subtitle: 'Telugu cinema's biggest chart-toppers', query: 'Telugu Blockbuster Movie Songs 2024 2025', img: _svg('#1a9fb5','#0a4f59','🌊'), cat: 'regional', catLabel: '🗺️ TELUGU', lang: 'Telugu', langEmoji: '🌊' },
+            { title: 'Tollywood Blockbusters 🌊', subtitle: "Telugu cinema's biggest chart-toppers", query: 'Telugu Blockbuster Movie Songs 2024 2025', img: _svg('#1a9fb5','#0a4f59','🌊'), cat: 'regional', catLabel: '🗺️ TELUGU', lang: 'Telugu', langEmoji: '🌊' },
             { title: 'Kannada Sandalwood Hits 🪕', subtitle: 'Best of Karnataka cinema and folk songs', query: 'Kannada Hit Songs Sandalwood 2024', img: _svg('#c94b4b','#4b134f','🪕'), cat: 'regional', catLabel: '🗺️ KANNADA', lang: 'Kannada', langEmoji: '🪕' },
             { title: 'Mollywood Magic 🌴', subtitle: 'Soothing and melodious Malayalam film songs', query: 'Malayalam Movie Songs Best Hits 2024', img: _svg('#1a6636','#0d3319','🌴'), cat: 'regional', catLabel: '🗺️ MALAYALAM', lang: 'Malayalam', langEmoji: '🌴' },
             { title: 'Marathi Lavani Beats 🏰', subtitle: 'Traditional Lavani to modern Marathi bangers', query: 'Marathi Lavani Dance Songs Popular', img: _svg('#f39c12','#d35400','🏰'), cat: 'regional', catLabel: '🗺️ MARATHI', lang: 'Marathi', langEmoji: '🏰' },
@@ -3069,22 +3069,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // ── LO-FI ─────────────────────────────────────────────────────────────
             { title: 'Bollywood Lo-Fi Chill ☕', subtitle: 'Slowed & reverb Bollywood vibes for late nights', query: 'Bollywood Lofi Chill Songs Slowed Reverb Study', img: _svg('#1e3a5f','#0ea5e9','☕'), cat: 'lofi', catLabel: '☕ LO-FI' },
-            { title: 'Arijit Singh Lofi Mix 🎧', subtitle: 'Lofi remixes of Arijit's soulful Bollywood songs', query: 'Arijit Singh Lofi Slowed Reverb Chill', img: _svg('#1a1a2e','#16213e','🎧'), cat: 'lofi', catLabel: '☕ LO-FI' },
-            { title: 'Hindi Study Beats 📖', subtitle: 'Calm instrumental lo-fi beats for focus & studying', query: 'Hindi Lofi Study Beats Instrumental Focus Chill', img: _svg('#1d3557','#457b9d','📖'), cat: 'lofi', catLabel: '📖 STUDY' },
-            { title: 'Punjabi Lofi & Acoustic 🌾', subtitle: 'Mellow Punjabi beats you can drift off to', query: 'Punjabi Lofi Chill Slowed Songs Acoustic', img: _svg('#2d6a4f','#1b4332','🌾'), cat: 'lofi', catLabel: '☕ LO-FI', lang: 'Punjabi', langEmoji: '🌾' },
-            { title: 'Sufi & Lofi Fusion ✨', subtitle: 'Mystical Sufi melodies with a chillhop twist', query: 'Sufi Songs Lofi Chill Fusion Indian', img: _svg('#3d0066','#6600cc','✨'), cat: 'lofi', catLabel: '☕ LO-FI' },
+            { title: 'Arijit Singh Lofi Mix 🎧', subtitle: "Lofi remixes of Arijit's soulful Bollywood songs", query: 'Arijit Singh Lofi Slowed Reverb Chill', img: _svg('#1a1a2e','#16213e','🎧'), cat: 'lofi', catLabel: '☕ LO-FI' },
+            { title: 'Hindi Study Beats 📖', subtitle: "Calm instrumental lo-fi beats for focus & studying", query: 'Hindi Lofi Study Beats Instrumental Focus Chill', img: _svg('#1d3557','#457b9d','📖'), cat: 'lofi', catLabel: '📖 STUDY' },
+            { title: 'Punjabi Lofi & Acoustic 🌾', subtitle: "Mellow Punjabi beats you can drift off to", query: 'Punjabi Lofi Chill Slowed Songs Acoustic', img: _svg('#2d6a4f','#1b4332','🌾'), cat: 'lofi', catLabel: '☕ LO-FI', lang: 'Punjabi', langEmoji: '🌾' },
+            { title: 'Sufi & Lofi Fusion ✨', subtitle: "Mystical Sufi melodies with a chillhop twist", query: 'Sufi Songs Lofi Chill Fusion Indian', img: _svg('#3d0066','#6600cc','✨'), cat: 'lofi', catLabel: '☕ LO-FI' },
 
             // ── DEVOTIONAL ───────────────────────────────────────────────────────
-            { title: 'Morning Aarti & Prayers 🌅', subtitle: 'Start your day with divine aarti and bhajans', query: 'Morning Aarti Bhajan Sunrise Prayer Songs', img: _svg('#f59e0b','#d97706','🌅'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
-            { title: 'Sufi Qawwali Night 🕌', subtitle: 'Nusrat Fateh Ali Khan and classic qawwali sessions', query: 'Nusrat Fateh Ali Khan Qawwali Sufi Songs Best', img: _svg('#1a0a2e','#4a0066','🕌'), cat: 'devotional', catLabel: '✨ SUFI' },
-            { title: 'Hanuman Chalisa & Ram Bhajan 🚩', subtitle: 'Powerful bhajans and stutis for lord Hanuman and Ram', query: 'Hanuman Chalisa Ram Bhajan Aarti Songs', img: _svg('#e05c00','#8b1a00','🚩'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
-            { title: 'Ganesh Aarti Celebration 🐘', subtitle: 'Ganpati Bappa Morya — festive songs for Ganesh Utsav', query: 'Ganesh Aarti Ganpati Songs Celebration', img: _svg('#ff8c00','#ff4500','🐘'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
-            { title: 'Meditation & Yoga Sounds 🧘', subtitle: 'Sanskrit mantras and healing sounds for daily yoga', query: 'Yoga Meditation Sanskrit Mantra Peaceful Music', img: _svg('#2ecc71','#1abc9c','🧘'), cat: 'devotional', catLabel: '🕉️ MEDITATION' },
-            { title: 'Krishna Bhajan Collection 🪈', subtitle: 'Beautiful devotional songs dedicated to Lord Krishna', query: 'Krishna Bhajan Radha Songs Devotional Hindi', img: _svg('#1565c0','#0d47a1','🪈'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Morning Aarti & Prayers 🌅', subtitle: "Start your day with divine aarti and bhajans", query: 'Morning Aarti Bhajan Sunrise Prayer Songs', img: _svg('#f59e0b','#d97706','🌅'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Sufi Qawwali Night 🕌', subtitle: "Nusrat Fateh Ali Khan and classic qawwali sessions", query: 'Nusrat Fateh Ali Khan Qawwali Sufi Songs Best', img: _svg('#1a0a2e','#4a0066','🕌'), cat: 'devotional', catLabel: '✨ SUFI' },
+            { title: 'Hanuman Chalisa & Ram Bhajan 🚩', subtitle: "Powerful bhajans and stutis for lord Hanuman and Ram", query: 'Hanuman Chalisa Ram Bhajan Aarti Songs', img: _svg('#e05c00','#8b1a00','🚩'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Ganesh Aarti Celebration 🐘', subtitle: "Ganpati Bappa Morya — festive songs for Ganesh Utsav", query: 'Ganesh Aarti Ganpati Songs Celebration', img: _svg('#ff8c00','#ff4500','🐘'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Meditation & Yoga Sounds 🧘', subtitle: "Sanskrit mantras and healing sounds for daily yoga", query: 'Yoga Meditation Sanskrit Mantra Peaceful Music', img: _svg('#2ecc71','#1abc9c','🧘'), cat: 'devotional', catLabel: '🕉️ MEDITATION' },
+            { title: 'Krishna Bhajan Collection 🪈', subtitle: "Beautiful devotional songs dedicated to Lord Krishna", query: 'Krishna Bhajan Radha Songs Devotional Hindi', img: _svg('#1565c0','#0d47a1','🪈'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
 
             // ── RETRO ─────────────────────────────────────────────────────────────
             { title: 'Kishore Kumar Golden Era 🎵', subtitle: 'Timeless classics from the legendary Kishore Kumar', query: 'Kishore Kumar Old Classic Songs Evergreen Hits', img: _svg('#c2410c','#92400e','🎵'), cat: 'retro', catLabel: '📻 RETRO' },
-            { title: 'Lata Mangeshkar Melodies 🌺', subtitle: 'The nightingale of India's most beloved songs', query: 'Lata Mangeshkar Best Songs Classic Hindi', img: _svg('#9d174d','#831843','🌺'), cat: 'retro', catLabel: '📻 RETRO' },
+            { title: 'Lata Mangeshkar Melodies 🌺', subtitle: "The nightingale of India's most beloved songs", query: 'Lata Mangeshkar Best Songs Classic Hindi', img: _svg('#9d174d','#831843','🌺'), cat: 'retro', catLabel: '📻 RETRO' },
             { title: '90s Bollywood Nostalgia 📼', subtitle: 'The golden era of Hindi film music — 1990-2000', query: '90s Bollywood Hit Songs Nostalgia Classic', img: _svg('#78350f','#451a03','📼'), cat: 'retro', catLabel: '📻 90s' },
             { title: 'Mohammad Rafi Hits 🎼', subtitle: 'Evergreen gems by the voice of golden Bollywood', query: 'Mohammad Rafi Classic Songs Hindi Best Hits', img: _svg('#4a1942','#6b21a8','🎼'), cat: 'retro', catLabel: '📻 RETRO' },
             { title: '80s Bollywood Disco 🕺', subtitle: 'Groovy 80s Bollywood disco and pop classics', query: '80s Bollywood Disco Classic Pop Songs', img: _svg('#7c2d12','#c2410c','🕺'), cat: 'retro', catLabel: '📻 80s' },
@@ -4365,6 +4365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ═══════════════════════════════════════════════════════════════════════
    EXPANDED PLAYER — Mini → Full Screen Transition (Spotify Style)
    ═══════════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
 (function initExpandedPlayer() {
     // ── Element refs ──────────────────────────────────────────────────────
     const expandedEl       = document.getElementById('expandedPlayer');
@@ -4666,4 +4667,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (playerTitleEl) titleObserver.observe(playerTitleEl, { childList: true, characterData: true, subtree: true });
 
 })();
+});
 

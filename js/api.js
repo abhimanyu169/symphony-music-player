@@ -244,7 +244,6 @@ const api = {
 
         // 2. Fallback: Direct JioSaavn public API (always accessible from Firebase Hosting)
         try {
-            const offset = page * limit;
             const res = await fetchWithTimeout(`${JIOSAAVN_API_BASE}/search/songs?query=${encodeURIComponent(refinedQuery)}&page=${page}&limit=${limit}`);
             if (!res.ok) return [];
             const data = await res.json();

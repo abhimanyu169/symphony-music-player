@@ -189,7 +189,6 @@ const player = (() => {
         const remaining = queue.length - (currentIndex + 1);
         if (remaining < 5) {
             const currentSong = queue[currentIndex];
-            console.log('Autoplay: Queue running low (remaining:', remaining, '). Prefetching recommendations for:', currentSong.name);
             
             try {
                 let suggestions = [];
@@ -218,7 +217,6 @@ const player = (() => {
                     });
                     if (newSongs.length > 0) {
                         queue = queue.concat(newSongs);
-                        console.log('Autoplay: Appended', newSongs.length, 'new related songs to queue.');
                         window.dispatchEvent(new CustomEvent('queueReplenished'));
                     }
                 }
@@ -338,7 +336,6 @@ const player = (() => {
                 } else {
                     const lastSong = queue[currentIndex];
                     if (lastSong && typeof api !== 'undefined' && typeof api.getSongSuggestions === 'function') {
-                        console.log('Autoplay: Fetching suggestions for track:', lastSong.name);
                         try {
                             const suggestions = await api.getSongSuggestions(lastSong.id, 15);
                             if (suggestions && suggestions.length > 0) {
@@ -495,7 +492,6 @@ const player = (() => {
         );
 
         if (isDataSaverEnabled || isMeteredConnection) {
-            console.log('Audio prefetch skipped: Data Saver is active or network is slow/metered.');
             return;
         }
 
@@ -511,7 +507,6 @@ const player = (() => {
                 return;
             }
 
-            console.log(`Silently pre-fetching audio for: ${song.name}`);
             const audio = new Audio();
             audio.src = url;
             audio.preload = 'auto';
@@ -522,7 +517,6 @@ const player = (() => {
                     const bufferedDuration = audio.buffered.end(0) - audio.buffered.start(0);
                     if (bufferedDuration >= 5) {
                         audio.removeEventListener('progress', onProgress);
-                        console.log(`Prefetched 5+ seconds for: ${song.name}`);
                     }
                 }
             };
