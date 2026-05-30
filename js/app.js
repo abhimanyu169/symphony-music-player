@@ -2708,173 +2708,152 @@ document.addEventListener('DOMContentLoaded', async () => {
         chunk.forEach(play => {
             const card = document.createElement('div');
             card.className = 'music-card';
+            card.dataset.category = play.cat || 'all';
             card.innerHTML = `
                 <div class="card-image-container">
                     <img src="${play.img}" alt="${escapeHtml(play.title)}" loading="lazy">
-                    <div class="card-play-btn">
-                        <i class='bx bx-play'></i>
-                    </div>
+                    <div class="card-play-btn"><i class='bx bx-play'></i></div>
+                    ${play.catLabel ? `<span class="playlist-cat-badge">${play.catLabel}</span>` : ''}
                 </div>
                 <div class="card-title">${escapeHtml(play.title)}</div>
                 <div class="card-subtitle">${escapeHtml(play.subtitle)}</div>
+                ${play.lang ? `<div class="playlist-lang-pill">${play.langEmoji || '🎵'} ${play.lang}</div>` : ''}
             `;
-            
             card.addEventListener('click', async () => {
-                showToast(`⏳ Loading Playlist: ${play.title}...`);
+                showToast(`⏳ Loading: ${play.title}...`);
                 try {
-                    let tracks = await api.searchSongs(play.query, play.pageOffset || 0, 40);
-                    if (play.targetLang) {
-                        const target = play.targetLang.toLowerCase();
-                        tracks = tracks.filter(song => {
-                            if (song.language) {
-                                return song.language.toLowerCase() === target;
-                            }
-                            return true;
-                        });
-                    }
+                    const tracks = await api.searchSongs(play.query, play.pageOffset || 0, 40);
                     showCollectionDetail(play.title, play.subtitle, play.img, tracks, false, play.query);
                 } catch (e) {
-                    console.error('Failed to load playlist tracks', e);
                     showToast('❌ Error loading playlist tracks.');
                 }
             });
-            
             topPlaylistsGrid.appendChild(card);
+        });
+    }
+
+    // ── Category filter logic ─────────────────────────────────────────────
+    function setupPlaylistFilters() {
+        const filterBar = document.getElementById('playlistFilterBar');
+        if (!filterBar) return;
+        filterBar.querySelectorAll('.india-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBar.querySelectorAll('.india-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const cat = btn.dataset.cat;
+                if (!topPlaylistsGrid) return;
+                topPlaylistsGrid.querySelectorAll('.music-card').forEach(card => {
+                    if (cat === 'all' || card.dataset.category === cat) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
         });
     }
 
     async function loadTopPlaylists() {
         if (!topPlaylistsGrid) return;
         topPlaylistsGrid.innerHTML = '';
-        
+        setupPlaylistFilters();
+
         const seedKey = getHourlySeedKey();
         const rand = getSeededRandom(seedKey);
-        
-        let playlists = [];
-        let langs = [];
-        try {
-            langs = JSON.parse(localStorage.getItem('symphonyUserLanguages') || '[]');
-        } catch (e) {
-            console.error('Failed to load user languages for playlists:', e);
-        }
-        if (!langs || langs.length === 0) {
-            langs = ['hindi', 'english', 'punjabi', 'tamil', 'telugu'];
-        }
 
-        const modifiers = ["vibes", "hits collection", "mellow playlist", "essentials", "favorites", "soundtrack"];
+        let userLangs = [];
+        try { userLangs = JSON.parse(localStorage.getItem('symphonyUserLanguages') || '[]'); } catch (e) {}
+        if (!userLangs || userLangs.length === 0) userLangs = ['hindi', 'punjabi', 'english'];
 
-        // 1. Regional Playlists based on user languages
-        langs.forEach(lang => {
-            const langObj = api.LANGUAGES_CONFIG.find(l => l.id === lang.toLowerCase());
-            const langName = langObj ? langObj.name : lang;
-            const langEmoji = langObj ? langObj.emoji : '🎵';
+        // SVG gradient art generator
+        const _svg = (c1, c2, icon) => {
+            const s = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'><defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='${c1}'/><stop offset='100%' stop-color='${c2}'/></linearGradient></defs><rect width='300' height='300' fill='url(%23g)'/><text x='150' y='185' font-size='110' text-anchor='middle' fill='rgba(255,255,255,0.22)'>${icon}</text></svg>`;
+            return `data:image/svg+xml;charset=utf-8,${s}`;
+        };
 
-            const modifierIndex = Math.floor(rand() * modifiers.length);
-            const pageOffset = Math.floor(rand() * 3); // page 0, 1, or 2
+        // India-specific playlist data, curated & categorized
+        const INDIA_PLAYLISTS = [
+            // ── TRENDING ──────────────────────────────────────────────────────────
+            { title: 'Bollywood Chartbusters 2025 🔥', subtitle: 'Biggest hits topping Indian charts right now', query: 'New Bollywood Songs 2025 Top Hits', img: _svg('#e8003c','#7b0028','🔥'), cat: 'trending', catLabel: '🔥 TRENDING', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Weekly India Top 50 📈', subtitle: 'Most streamed songs across India this week', query: 'Top 50 India Songs 2025', img: _svg('#ff6b35','#c44200','📈'), cat: 'trending', catLabel: '🔥 TRENDING', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Viral Reels Hits 📱', subtitle: 'Songs that are breaking Instagram & YouTube Shorts', query: 'Viral Indian Songs Instagram Reels 2025', img: _svg('#833ab4','#fd1d1d','📱'), cat: 'trending', catLabel: '🔥 VIRAL' },
+            { title: 'New Punjabi Bangers 2025 ⚡', subtitle: 'Freshest Punjabi tracks dropping this year', query: 'New Punjabi Songs 2025 Latest Hits', img: _svg('#f7971e','#ffd200','⚡'), cat: 'trending', catLabel: '🔥 TRENDING', lang: 'Punjabi', langEmoji: '🌾' },
+            { title: 'IPL Season Anthems 🏏', subtitle: 'Cricket hype tracks that rule every match day', query: 'IPL Cricket Anthem Songs India 2025', img: _svg('#0052cc','#ff6600','🏏'), cat: 'trending', catLabel: '🏏 IPL' },
 
-            // Romance
-            const romTitles = [`${langName} Romance 💖`, `${langName} Love Melodies 💕`, `${langName} Heartbeats 💘`];
-            const romTitle = romTitles[Math.floor(rand() * romTitles.length)];
-            const romImg = CHART_PLAYLIST_IMAGES.romance[Math.floor(rand() * CHART_PLAYLIST_IMAGES.romance.length)];
-            playlists.push({
-                id: `play-${lang}-romance-${seedKey}`,
-                title: romTitle,
-                subtitle: `Beautiful love ballads and romantic songs in ${langName}`,
-                query: `${langName} romantic love songs hits ${modifiers[modifierIndex]}`,
-                img: romImg,
-                targetLang: lang,
-                pageOffset: pageOffset
-            });
+            // ── BOLLYWOOD ────────────────────────────────────────────────────────
+            { title: 'Arijit Singh Jukebox 🎤', subtitle: 'Soulful romantic masterpieces by Arijit Singh', query: 'Arijit Singh Best Songs Playlist', img: _svg('#c94b4b','#4b134f','🎤'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Bollywood Romantic Hits 💕', subtitle: 'Most beloved love songs from Hindi cinema', query: 'Bollywood Romantic Love Songs Hits', img: _svg('#ff758c','#ff7eb3','💕'), cat: 'bollywood', catLabel: '💕 ROMANCE', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Shah Rukh Khan OST 🌟', subtitle: 'Iconic soundtrack collection from SRK films', query: 'Shah Rukh Khan Movie Songs Best Hits', img: _svg('#2c3e50','#fd746c','🌟'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Bollywood Party Night 🪩', subtitle: 'High energy Bollywood dance floor anthems', query: 'Bollywood Party Dance Songs 2024 2025', img: _svg('#8b5cf6','#3b82f6','🪩'), cat: 'bollywood', catLabel: '🪩 PARTY', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'A.R. Rahman Classics 🎼', subtitle: 'Timeless masterpieces from the Mozart of Madras', query: 'AR Rahman Best Songs Collection Classics', img: _svg('#1d4350','#a43931','🎼'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD' },
+            { title: 'Atif Aslam Best of 🎙️', subtitle: 'Heartfelt vocals from the Pakistani Bollywood legend', query: 'Atif Aslam Best Bollywood Songs', img: _svg('#355c7d','#6c5b7b','🎙️'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Neha Kakkar Party Mix 🎉', subtitle: 'Peppy party hits by Bollywood's party queen', query: 'Neha Kakkar Best Party Songs', img: _svg('#fc5c7d','#6a3093','🎉'), cat: 'bollywood', catLabel: '🪩 PARTY', lang: 'Hindi', langEmoji: '🇮🇳' },
+            { title: 'Sonu Nigam Golden Hits ✨', subtitle: 'Classic and modern gems by Sonu Nigam', query: 'Sonu Nigam Best Songs Hindi', img: _svg('#daa520','#654321','✨'), cat: 'bollywood', catLabel: '🎬 BOLLYWOOD', lang: 'Hindi', langEmoji: '🇮🇳' },
 
-            // Party
-            const partyTitles = [`${langName} Party Mashup 🪩`, `${langName} Club Dance 🕺`, `${langName} Hype Beats ⚡`];
-            const partyTitle = partyTitles[Math.floor(rand() * partyTitles.length)];
-            const partyImg = CHART_PLAYLIST_IMAGES.party[Math.floor(rand() * CHART_PLAYLIST_IMAGES.party.length)];
-            playlists.push({
-                id: `play-${lang}-party-${seedKey}`,
-                title: partyTitle,
-                subtitle: `High energy dance hits and party remixes in ${langName}`,
-                query: `dance party remix ${langName} songs ${modifiers[(modifierIndex + 1) % modifiers.length]}`,
-                img: partyImg,
-                targetLang: lang,
-                pageOffset: pageOffset
-            });
+            // ── REGIONAL ─────────────────────────────────────────────────────────
+            { title: 'Kollywood Kuthu 🛕', subtitle: 'Tamil foot-tapping dance hits and folk beats', query: 'Tamil Kuthu Songs Best Hits Vijay Thalapathy', img: _svg('#f7971e','#ffd200','🛕'), cat: 'regional', catLabel: '🗺️ TAMIL', lang: 'Tamil', langEmoji: '🛕' },
+            { title: 'Tollywood Blockbusters 🌊', subtitle: 'Telugu cinema's biggest chart-toppers', query: 'Telugu Blockbuster Movie Songs 2024 2025', img: _svg('#1a9fb5','#0a4f59','🌊'), cat: 'regional', catLabel: '🗺️ TELUGU', lang: 'Telugu', langEmoji: '🌊' },
+            { title: 'Kannada Sandalwood Hits 🪕', subtitle: 'Best of Karnataka cinema and folk songs', query: 'Kannada Hit Songs Sandalwood 2024', img: _svg('#c94b4b','#4b134f','🪕'), cat: 'regional', catLabel: '🗺️ KANNADA', lang: 'Kannada', langEmoji: '🪕' },
+            { title: 'Mollywood Magic 🌴', subtitle: 'Soothing and melodious Malayalam film songs', query: 'Malayalam Movie Songs Best Hits 2024', img: _svg('#1a6636','#0d3319','🌴'), cat: 'regional', catLabel: '🗺️ MALAYALAM', lang: 'Malayalam', langEmoji: '🌴' },
+            { title: 'Marathi Lavani Beats 🏰', subtitle: 'Traditional Lavani to modern Marathi bangers', query: 'Marathi Lavani Dance Songs Popular', img: _svg('#f39c12','#d35400','🏰'), cat: 'regional', catLabel: '🗺️ MARATHI', lang: 'Marathi', langEmoji: '🏰' },
+            { title: 'Bengali Rabindra Sangeet 🎨', subtitle: 'The poetry and music of Rabindranath Tagore', query: 'Rabindra Sangeet Bengali Songs Classic', img: _svg('#6a5acd','#3d2b8e','🎨'), cat: 'regional', catLabel: '🗺️ BENGALI', lang: 'Bengali', langEmoji: '🎨' },
+            { title: 'Gujarati Garba 2025 🪁', subtitle: 'Navratri special – high energy Garba and Dandiya', query: 'Gujarati Garba Dandiya Navratri Songs 2024', img: _svg('#ff6b35','#ee0979','🪁'), cat: 'regional', catLabel: '🗺️ GUJARATI', lang: 'Gujarati', langEmoji: '🪁' },
+            { title: 'Rajasthani Folk Magic 🐪', subtitle: 'Authentic folk melodies from the land of Rajputana', query: 'Rajasthani Folk Songs Popular Hits', img: _svg('#e67e22','#d35400','🐪'), cat: 'regional', catLabel: '🗺️ RAJASTHANI', lang: 'Rajasthani', langEmoji: '🐪' },
+            { title: 'Bhojpuri Dhamaal 🦁', subtitle: 'Energetic Bhojpuri hits that rule UP and Bihar', query: 'Bhojpuri Super Hits Songs 2024 2025', img: _svg('#e74c3c','#8e44ad','🦁'), cat: 'regional', catLabel: '🗺️ BHOJPURI', lang: 'Bhojpuri', langEmoji: '🦁' },
+            { title: 'Haryanvi Dance Hits 🚜', subtitle: 'Hard-hitting Haryanvi tracks for the dancefloor', query: 'Haryanvi Hit Songs DJ 2024', img: _svg('#27ae60','#2ecc71','🚜'), cat: 'regional', catLabel: '🗺️ HARYANVI', lang: 'Haryanvi', langEmoji: '🚜' },
+            { title: 'Punjabi Power ⚡', subtitle: 'High energy Punjabi hits — Diljit, AP Dhillon & more', query: 'Punjabi Power Hits Diljit AP Dhillon 2024 2025', img: _svg('#f6d365','#fda085','⚡'), cat: 'regional', catLabel: '🌾 PUNJABI', lang: 'Punjabi', langEmoji: '🌾' },
 
-            // Lo-fi
-            const lofiTitles = [`${langName} Lo-Fi & Chill ☕`, `${langName} Acoustic Chill 🎸`, `${langName} Lazy Sunday 🍃`];
-            const lofiTitle = lofiTitles[Math.floor(rand() * lofiTitles.length)];
-            const lofiImg = CHART_PLAYLIST_IMAGES.lofi[Math.floor(rand() * CHART_PLAYLIST_IMAGES.lofi.length)];
-            playlists.push({
-                id: `play-${lang}-lofi-${seedKey}`,
-                title: lofiTitle,
-                subtitle: `Relaxing lofi and acoustic vibes in ${langName}`,
-                query: `lofi study chill acoustic ${langName} songs`,
-                img: lofiImg,
-                targetLang: lang,
-                pageOffset: pageOffset
-            });
+            // ── MOOD ─────────────────────────────────────────────────────────────
+            { title: 'Dil Se — Sad Songs 💔', subtitle: 'When you need music to feel the pain', query: 'Hindi Sad Emotional Songs Bollywood Heartbreak', img: _svg('#2c3e50','#4a4a4a','💔'), cat: 'mood', catLabel: '💔 SAD' },
+            { title: 'Happy Vibes Only 😊', subtitle: 'Cheerful upbeat songs to instantly lift your mood', query: 'Happy Bollywood Upbeat Songs Positive Vibes', img: _svg('#f6d365','#fda085','😊'), cat: 'mood', catLabel: '😊 HAPPY' },
+            { title: 'Rainy Day Monsoon Mix 🌧️', subtitle: 'Perfect soundtrack for the Indian monsoon season', query: 'Barish Baarish Monsoon Hindi Sad Romantic Songs', img: _svg('#1a1a2e','#16213e','🌧️'), cat: 'mood', catLabel: '🌧️ MONSOON' },
+            { title: 'Morning Motivation ☀️', subtitle: 'Start your day with energy and positivity', query: 'Morning Positive Songs Hindi Motivational Upbeat', img: _svg('#f7971e','#ffd200','☀️'), cat: 'mood', catLabel: '☀️ MORNING' },
+            { title: 'Late Night Drive 🌃', subtitle: 'Smooth tracks for those midnight city drives', query: 'Hindi Night Drive Chill Songs Romantic', img: _svg('#0f0c29','#302b63','🌃'), cat: 'mood', catLabel: '🌙 NIGHT' },
+            { title: 'Yaari Dosti Songs 👫', subtitle: 'Friendship anthems to celebrate your squad', query: 'Yaari Dosti Friendship Songs Bollywood', img: _svg('#11998e','#38ef7d','👫'), cat: 'mood', catLabel: '👫 DOSTI' },
+            { title: 'Breakup Recovery Playlist 🫶', subtitle: 'Moving on songs for your healing journey', query: 'Breakup Healing Moving On Hindi Songs', img: _svg('#ef32d9','#89fffd','🫶'), cat: 'mood', catLabel: '🫶 HEALING' },
 
-            // Devotional
-            const devTitles = [`${langName} Devotional Peace 🙏`, `${langName} Sufi Soul ✨`, `${langName} Morning Aarti 🌅`];
-            const devTitle = devTitles[Math.floor(rand() * devTitles.length)];
-            const devImg = CHART_PLAYLIST_IMAGES.devotional[Math.floor(rand() * CHART_PLAYLIST_IMAGES.devotional.length)];
-            playlists.push({
-                id: `play-${lang}-devotional-${seedKey}`,
-                title: devTitle,
-                subtitle: `Soothing spiritual and devotional melodies in ${langName}`,
-                query: `devotional bhajan peaceful prayer ${langName} songs`,
-                img: devImg,
-                targetLang: lang,
-                pageOffset: 0
-            });
-        });
+            // ── PARTY ─────────────────────────────────────────────────────────────
+            { title: 'Desi Dance Floor 🪩', subtitle: 'Bhangra, hip-hop and dance beats all mixed up', query: 'Desi Dance Floor Bollywood Bhangra DJ Remix 2024', img: _svg('#8b5cf6','#ec4899','🪩'), cat: 'party', catLabel: '🪩 PARTY' },
+            { title: 'Bollywood DJ Remixes 🎛️', subtitle: 'Club-ready remixes of your favourite Bollywood songs', query: 'Bollywood DJ Remix Club Songs 2024 2025', img: _svg('#6441a5','#2a0845','🎛️'), cat: 'party', catLabel: '🎛️ DJ' },
+            { title: 'Punjabi Club Bangers 🕺', subtitle: 'Non-stop Punjabi beats for all-night parties', query: 'Punjabi Club Songs DJ Bass Boosted Party', img: _svg('#f7971e','#ffd200','🕺'), cat: 'party', catLabel: '🌾 PUNJABI' },
+            { title: 'Holi Hai! 🎨', subtitle: 'Colorful festive bangers for the festival of colors', query: 'Holi Songs Dance Bollywood Festive 2024', img: _svg('#ff6b6b','#ffd93d','🎨'), cat: 'party', catLabel: '🎨 HOLI' },
+            { title: 'Shaadi Dance Playlist 💃', subtitle: 'Ultimate wedding celebration songs for Mehndi & Sangeet', query: 'Shaadi Wedding Dance Songs Bollywood Punjabi', img: _svg('#ff758c','#ff7eb3','💍'), cat: 'party', catLabel: '💍 SHAADI' },
+            { title: 'Diwali Dhamaka 🪔', subtitle: 'Festive favorites that light up the Diwali celebrations', query: 'Diwali Songs Celebration Festive Bollywood', img: _svg('#daa520','#8b4513','🪔'), cat: 'party', catLabel: '🪔 DIWALI' },
 
-        // 2. Global / General Playlists pool
-        const globalPlaylistsTemplates = [
-            { title: 'Coding Session 💻', query: 'synthwave retrowave dark synth coding cyber focus', img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=300&h=300&fit=crop', subtitle: 'Synthwave & retrowave for developer focus', theme: 'general' },
-            { title: 'Midnight Jazz 🎷', query: 'slow midnight jazz instrumental saxophone trumpet', img: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=300&h=300&fit=crop', subtitle: 'Slow and smoky jazz instrumentals', theme: 'general' },
-            { title: 'Sleep & Soothe 🌙', query: 'ambient sleep sounds deep relaxation sleep music zen sleep', img: 'https://images.unsplash.com/photo-1511295742364-92767fa62d9f?w=300&h=300&fit=crop', subtitle: 'Ambient soundscapes for deep sleep', theme: 'general' },
-            { title: 'Workout Hype ⚡', query: 'edm gym running workout tracks high bpm house', img: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&h=300&fit=crop', subtitle: 'High energy tracks to power your workout', theme: 'workout' },
-            { title: 'Acoustic Covers 🎸', query: 'acoustic cover songs indie chill guitar unplugged sessions', img: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop', subtitle: 'Indie acoustic covers and guitar chill', theme: 'lofi' },
-            { title: 'Rainy Day Melodies 🌧️', query: 'rainy day songs slow melancholic pop sad piano', img: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=300&h=300&fit=crop', subtitle: 'Melancholic pop for rainy afternoons', theme: 'sad' },
-            { title: 'Rock Classics 🎸', query: 'classic rock hits queen led zeppelin AC DC pink floyd', img: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=300&h=300&fit=crop', subtitle: 'Timeless rock and metal anthems', theme: 'retro' },
-            { title: 'Gaming Beast Mode 🎮', query: 'epic orchestral gaming battle combat dubstep edm electro', img: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=300&h=300&fit=crop', subtitle: 'Intense background beats for competitive gaming', theme: 'workout' },
-            { title: 'Nature Escape 🍃', query: 'forest rain bird sounds flute nature peaceful sounds zen meditation', img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&h=300&fit=crop', subtitle: 'Healing nature sounds and soft ambient flutes', theme: 'devotional' },
-            { title: 'Lofi Study Beats 📖', query: 'lofi hip hop study beats homework study focus instrumental', img: 'https://images.unsplash.com/photo-1516981879613-9f5da904015f?w=300&h=300&fit=crop', subtitle: 'Relaxing chillhop beats to keep you focused', theme: 'lofi' },
-            { title: 'Coffee Shop Vibe ☕', query: 'acoustic pop coffee shop background guitar cafe sessions', img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=300&fit=crop', subtitle: 'Warm acoustic sessions for relaxed afternoons', theme: 'lofi' },
-            { title: 'Summer Beach Party 🏖️', query: 'summer pop dance house hits tropical deep house', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=300&fit=crop', subtitle: 'Tropical house and pop for sunny days', theme: 'party' },
-            { title: 'Retro Pop Rewind 🪩', query: '80s 90s classic pop anthems disco pop old school hits', img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&h=300&fit=crop', subtitle: 'Timeless pop hits from the 80s and 90s', theme: 'retro' },
-            { title: 'Heavy Metal Fury ⚡', query: 'heavy metal thrash metal hard rock slayer metallica megadeth', img: 'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=300&h=300&fit=crop', subtitle: 'High voltage metal tracks for headbanging', theme: 'workout' },
-            { title: 'Epic Cinematic 🎬', query: 'epic orchestral cinematic movie theme soundtrack orchestra', img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&h=300&fit=crop', subtitle: 'Inspiring orchestral movie themes and scores', theme: 'general' },
-            { title: 'Country Roads 🌾', query: 'classic country songs folk guitar bluegrass roots', img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop', subtitle: 'Soulful country melodies and acoustic stories', theme: 'general' },
-            { title: 'Hip Hop Essentials 🎤', query: '90s hip hop boom bap rap classics gold school rap', img: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=300&h=300&fit=crop', subtitle: 'Boom bap beats and legendary hip hop verses', theme: 'general' },
-            { title: 'Piano Masterpieces 🎹', query: 'classical piano solo chopin mozart beethoven calm piano', img: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=300&h=300&fit=crop', subtitle: 'Serene classical piano compositions', theme: 'general' },
-            { title: 'Chillhop Sunset 🌅', query: 'chillhop boom bap beats sunset background relax instrumental', img: 'https://images.unsplash.com/photo-1472289065668-ce650ac443d2?w=300&h=300&fit=crop', subtitle: 'Mellow boom bap beats for late evenings', theme: 'lofi' },
-            { title: 'Sanskrit Chants & Zen 🕉️', query: 'sanskrit mantra chants meditation yoga chants peaceful', img: 'https://images.unsplash.com/photo-1609137144813-2ef0e741525a?w=300&h=300&fit=crop', subtitle: 'Ancient Sanskrit chants for spiritual peace', theme: 'devotional' },
-            { title: 'Blues Night 🌃', query: 'classic blues guitar soul BB King Muddy Waters Buddy Guy', img: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=300&h=300&fit=crop', subtitle: 'Authentic blues solos and soulful stories', theme: 'general' },
-            { title: 'Deep Focus Ambient 🌌', query: 'deep space ambient focus drone synthesizers calming soundscapes', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&h=300&fit=crop', subtitle: 'Immersive electronic textures for focus', theme: 'general' },
-            { title: 'Latin Fiesta 💃', query: 'reggaeton hits salsa bachata latin pop dance fiesta', img: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&h=300&fit=crop', subtitle: 'Hot reggaeton, salsa, and latin pop beats', theme: 'party' },
-            { title: 'Disco Fever 🕺', query: '70s disco funk grooves dance classics earth wind fire', img: 'https://images.unsplash.com/photo-1482440308425-276ad0f28b19?w=300&h=300&fit=crop', subtitle: 'Dancefloor funk and classic 70s disco grooves', theme: 'party' },
-            { title: 'Reggae Vibe 🇯🇲', query: 'roots reggae dub chill bob marley style ska classic', img: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300&h=300&fit=crop', subtitle: 'Roots reggae and positive vibrations', theme: 'lofi' },
-            { title: 'Sufi Whirling 💫', query: 'mystic sufi music nusrat fateh ali khan qawwali soul', img: 'https://images.unsplash.com/photo-1499244015905-ac73dfd74772?w=300&h=300&fit=crop', subtitle: 'Trance-inducing spiritual sufi qawwalis', theme: 'devotional' }
+            // ── LO-FI ─────────────────────────────────────────────────────────────
+            { title: 'Bollywood Lo-Fi Chill ☕', subtitle: 'Slowed & reverb Bollywood vibes for late nights', query: 'Bollywood Lofi Chill Songs Slowed Reverb Study', img: _svg('#1e3a5f','#0ea5e9','☕'), cat: 'lofi', catLabel: '☕ LO-FI' },
+            { title: 'Arijit Singh Lofi Mix 🎧', subtitle: 'Lofi remixes of Arijit's soulful Bollywood songs', query: 'Arijit Singh Lofi Slowed Reverb Chill', img: _svg('#1a1a2e','#16213e','🎧'), cat: 'lofi', catLabel: '☕ LO-FI' },
+            { title: 'Hindi Study Beats 📖', subtitle: 'Calm instrumental lo-fi beats for focus & studying', query: 'Hindi Lofi Study Beats Instrumental Focus Chill', img: _svg('#1d3557','#457b9d','📖'), cat: 'lofi', catLabel: '📖 STUDY' },
+            { title: 'Punjabi Lofi & Acoustic 🌾', subtitle: 'Mellow Punjabi beats you can drift off to', query: 'Punjabi Lofi Chill Slowed Songs Acoustic', img: _svg('#2d6a4f','#1b4332','🌾'), cat: 'lofi', catLabel: '☕ LO-FI', lang: 'Punjabi', langEmoji: '🌾' },
+            { title: 'Sufi & Lofi Fusion ✨', subtitle: 'Mystical Sufi melodies with a chillhop twist', query: 'Sufi Songs Lofi Chill Fusion Indian', img: _svg('#3d0066','#6600cc','✨'), cat: 'lofi', catLabel: '☕ LO-FI' },
+
+            // ── DEVOTIONAL ───────────────────────────────────────────────────────
+            { title: 'Morning Aarti & Prayers 🌅', subtitle: 'Start your day with divine aarti and bhajans', query: 'Morning Aarti Bhajan Sunrise Prayer Songs', img: _svg('#f59e0b','#d97706','🌅'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Sufi Qawwali Night 🕌', subtitle: 'Nusrat Fateh Ali Khan and classic qawwali sessions', query: 'Nusrat Fateh Ali Khan Qawwali Sufi Songs Best', img: _svg('#1a0a2e','#4a0066','🕌'), cat: 'devotional', catLabel: '✨ SUFI' },
+            { title: 'Hanuman Chalisa & Ram Bhajan 🚩', subtitle: 'Powerful bhajans and stutis for lord Hanuman and Ram', query: 'Hanuman Chalisa Ram Bhajan Aarti Songs', img: _svg('#e05c00','#8b1a00','🚩'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Ganesh Aarti Celebration 🐘', subtitle: 'Ganpati Bappa Morya — festive songs for Ganesh Utsav', query: 'Ganesh Aarti Ganpati Songs Celebration', img: _svg('#ff8c00','#ff4500','🐘'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+            { title: 'Meditation & Yoga Sounds 🧘', subtitle: 'Sanskrit mantras and healing sounds for daily yoga', query: 'Yoga Meditation Sanskrit Mantra Peaceful Music', img: _svg('#2ecc71','#1abc9c','🧘'), cat: 'devotional', catLabel: '🕉️ MEDITATION' },
+            { title: 'Krishna Bhajan Collection 🪈', subtitle: 'Beautiful devotional songs dedicated to Lord Krishna', query: 'Krishna Bhajan Radha Songs Devotional Hindi', img: _svg('#1565c0','#0d47a1','🪈'), cat: 'devotional', catLabel: '🙏 DEVOTIONAL' },
+
+            // ── RETRO ─────────────────────────────────────────────────────────────
+            { title: 'Kishore Kumar Golden Era 🎵', subtitle: 'Timeless classics from the legendary Kishore Kumar', query: 'Kishore Kumar Old Classic Songs Evergreen Hits', img: _svg('#c2410c','#92400e','🎵'), cat: 'retro', catLabel: '📻 RETRO' },
+            { title: 'Lata Mangeshkar Melodies 🌺', subtitle: 'The nightingale of India's most beloved songs', query: 'Lata Mangeshkar Best Songs Classic Hindi', img: _svg('#9d174d','#831843','🌺'), cat: 'retro', catLabel: '📻 RETRO' },
+            { title: '90s Bollywood Nostalgia 📼', subtitle: 'The golden era of Hindi film music — 1990-2000', query: '90s Bollywood Hit Songs Nostalgia Classic', img: _svg('#78350f','#451a03','📼'), cat: 'retro', catLabel: '📻 90s' },
+            { title: 'Mohammad Rafi Hits 🎼', subtitle: 'Evergreen gems by the voice of golden Bollywood', query: 'Mohammad Rafi Classic Songs Hindi Best Hits', img: _svg('#4a1942','#6b21a8','🎼'), cat: 'retro', catLabel: '📻 RETRO' },
+            { title: '80s Bollywood Disco 🕺', subtitle: 'Groovy 80s Bollywood disco and pop classics', query: '80s Bollywood Disco Classic Pop Songs', img: _svg('#7c2d12','#c2410c','🕺'), cat: 'retro', catLabel: '📻 80s' },
+            { title: 'Mukesh & Rafi Duets 🎤', subtitle: 'Legendary vocal duets from the golden era', query: 'Mukesh Rafi Classic Duet Hindi Old Songs', img: _svg('#134e4a','#0f766e','🎤'), cat: 'retro', catLabel: '📻 RETRO' },
+
+            // ── WORKOUT ───────────────────────────────────────────────────────────
+            { title: 'Desi Gym Workout 💪', subtitle: 'Indian songs to pump you up at the gym', query: 'Hindi Punjabi Workout Gym Songs High Energy', img: _svg('#10b981','#065f46','💪'), cat: 'workout', catLabel: '⚡ WORKOUT' },
+            { title: 'Running Beats India 🏃', subtitle: 'Fast-paced tracks to push your running pace', query: 'Indian Running Songs High BPM Punjabi Hindi', img: _svg('#ef4444','#b91c1c','🏃'), cat: 'workout', catLabel: '🏃 RUNNING' },
+            { title: 'Power Yoga Flow 🧘', subtitle: 'Uplifting music for power yoga and stretching sessions', query: 'Yoga Flow Upbeat Meditation Exercise Music India', img: _svg('#8b5cf6','#6d28d9','🧘'), cat: 'workout', catLabel: '⚡ WORKOUT' },
         ];
 
-        const shuffledGlobals = seededShuffle(globalPlaylistsTemplates, rand);
-        shuffledGlobals.forEach((gp, idx) => {
-            const pageOffset = Math.floor(rand() * 2);
-            playlists.push({
-                id: `play-global-${idx}-${seedKey}`,
-                title: gp.title,
-                subtitle: gp.subtitle,
-                query: gp.query + ` ${modifiers[Math.floor(rand() * modifiers.length)]}`,
-                img: gp.img,
-                pageOffset: pageOffset
-            });
-        });
-
-        allTopPlaylists = seededShuffle(playlists, rand);
+        // Seed shuffle for hourly variety
+        const shuffled = seededShuffle(INDIA_PLAYLISTS, rand);
+        allTopPlaylists = shuffled;
         currentTopPlaylistsPage = 0;
-        
+
         renderTopPlaylistsChunk(allTopPlaylists.slice(0, topPlaylistsPageSize));
 
         if (loadMoreTopPlaylistsBtn) {
@@ -2885,6 +2864,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     }
+
 
     function getActiveLanguage() {
         let userLangs = [];

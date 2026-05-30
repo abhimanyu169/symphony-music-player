@@ -188,15 +188,44 @@
 
 
 
-                <!-- Top Playlists Section -->
+                <!-- Top Playlists Section — India-focused redesign -->
                 <section class="music-section hidden" id="topPlaylistsSection">
-                    <h2>Top Playlists 🎵</h2>
-                    <p class="section-subtitle" style="color: var(--text-secondary); margin-bottom: 24px;">Curated soundscapes to fit every vibe and activity.</p>
+                    <!-- Hero Banner -->
+                    <div class="india-playlist-hero">
+                        <div class="india-playlist-hero-content">
+                            <span class="india-hero-badge">🇮🇳 Made for India</span>
+                            <h1 class="india-playlist-title">Top Playlists</h1>
+                            <p class="india-playlist-sub">Curated desi vibes for every mood, moment & language 🎶</p>
+                        </div>
+                        <div class="india-playlist-stats">
+                            <div class="india-stat"><span class="india-stat-num">50+</span><span class="india-stat-label">Playlists</span></div>
+                            <div class="india-stat"><span class="india-stat-num">13</span><span class="india-stat-label">Languages</span></div>
+                            <div class="india-stat"><span class="india-stat-num">∞</span><span class="india-stat-label">Vibes</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter Tabs -->
+                    <div class="india-filter-bar" id="playlistFilterBar">
+                        <button class="india-filter-btn active" data-cat="all">🎵 All</button>
+                        <button class="india-filter-btn" data-cat="trending">🔥 Trending</button>
+                        <button class="india-filter-btn" data-cat="bollywood">🎬 Bollywood</button>
+                        <button class="india-filter-btn" data-cat="regional">🗺️ Regional</button>
+                        <button class="india-filter-btn" data-cat="mood">💭 Mood</button>
+                        <button class="india-filter-btn" data-cat="party">🪩 Party</button>
+                        <button class="india-filter-btn" data-cat="lofi">☕ Lo-Fi</button>
+                        <button class="india-filter-btn" data-cat="devotional">🙏 Devotional</button>
+                        <button class="india-filter-btn" data-cat="retro">📻 Retro</button>
+                        <button class="india-filter-btn" data-cat="workout">⚡ Workout</button>
+                    </div>
+
+                    <!-- Playlist Grid -->
                     <div class="card-grid" id="topPlaylistsGrid"></div>
+
                     <div class="top-playlists-actions-container" style="display: flex; justify-content: center; margin-top: 32px; margin-bottom: 16px;">
                         <button id="loadMoreTopPlaylistsBtn" class="btn-premium hidden">Load More Playlists</button>
                     </div>
                 </section>
+
 
                 <!-- Devotional Section -->
                 <section class="music-section hidden" id="devotionalSection">
