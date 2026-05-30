@@ -507,9 +507,208 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Decode HTML entities from API responses (e.g. &quot; -> ")
     function decodeHtml(str) {
         if (!str) return '';
-        const txt = document.createElement('textarea');
         txt.innerHTML = str;
         return txt.value;
+    }
+
+    // ---- Dynamic Trending Songs Carousel (Hero Slide) ----
+    let carouselSongs = [];
+    let carouselInterval = null;
+    let currentSlideIdx = 0;
+
+    async function loadTrendingCarousel() {
+        const carouselEl = document.getElementById('trendingCarousel');
+        const indicatorsEl = document.getElementById('carouselIndicators');
+        if (!carouselEl) return;
+
+        // Show a loader slide while fetching live data
+        carouselEl.innerHTML = `
+            <div class="carousel-slide active" style="background: linear-gradient(135deg, #1d0f3a, #0a0518); display: flex; align-items: center; justify-content: center;">
+                <div style="text-align: center; color: var(--text-secondary);">
+                    <div class="spinner" style="margin: 0 auto 12px auto; width: 30px; height: 30px;"></div>
+                    <p style="font-size: 13px;">Loading real-world trending hits...</p>
+                </div>
+            </div>
+        `;
+
+        const trendingQueries = [
+            { query: "Tauba Tauba Karan Aujla", tag: "VIRAL #1", description: "Vicky Kaushal & Karan Aujla's ultimate viral sensation!", bg: "linear-gradient(135deg, #7F00FF, #E100FF)" },
+            { query: "Heeriye Jasleen Royal Arijit Singh", tag: "TRENDING #2", description: "Sweet romance meets Arijit Singh & Jasleen Royal's magical vocals.", bg: "linear-gradient(135deg, #8E2DE2, #4A00E0)" },
+            { query: "Chaleya Jawan Arijit Singh", tag: "TRENDING #3", description: "The heart-melting love anthem starring Shah Rukh Khan and Nayanthara.", bg: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)" },
+            { query: "Kesariya Brahmastra Pritam", tag: "TRENDING #4", description: "Arijit Singh's golden saffron love song that captured the nation.", bg: "linear-gradient(135deg, #f12711, #f5af19)" },
+            { query: "Calm Down Rema", tag: "GLOBAL TOP", description: "Rema & Selena Gomez's chartbuster global pop anthem.", bg: "linear-gradient(135deg, #11998e, #38ef7d)" },
+            { query: "Softly Karan Aujla", tag: "PUNJABI HITS", description: "Catchy beats and smooth vocals by the superstar Karan Aujla.", bg: "linear-gradient(135deg, #fc466b, #3f5efb)" }
+        ];
+
+        try {
+            // Fetch first search result for each query in parallel
+            const songResults = await Promise.all(
+                trendingQueries.map(async (item) => {
+                    try {
+                        const searchRes = await api.searchSongs(item.query, 0, 1);
+                        if (searchRes && searchRes.length > 0) {
+                            return {
+                                song: searchRes[0],
+                                tag: item.tag,
+                                description: item.description,
+                                bg: item.bg
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Error fetching trending slide song:', e);
+                    }
+                    return null;
+                })
+            );
+
+            // Filter out any failed fetches
+            const slidesData = songResults.filter(s => s !== null);
+            
+            if (slidesData.length === 0) {
+                // If searches failed, show fallback static text
+                carouselEl.innerHTML = `
+                    <div class="carousel-slide active" style="background: linear-gradient(135deg, #1d0f3a, #0a0518); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px;">
+                        <h1 class="carousel-slide-title">Endless Music Awaits 🎵</h1>
+                        <p class="carousel-slide-desc" style="display: block;">Discover top charts, radios, and Indian hits. Search above to find any track!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            carouselSongs = slidesData.map(d => d.song);
+            carouselEl.innerHTML = '';
+            if (indicatorsEl) indicatorsEl.innerHTML = '';
+
+            slidesData.forEach((slide, index) => {
+                const song = slide.song;
+                const rawName = decodeHtml(song.name);
+                const artistName = song.artists?.primary?.map(a => decodeHtml(a.name)).join(', ') || 'Unknown Artist';
+                const imgUrl = api.getBestImageUrl(song) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%22180%22%3E%3Crect fill=%22%231a1a2e%22 width=%22100%25%22 height=%22100%25%22/%3E%3C/svg%3E';
+
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `carousel-slide${index === 0 ? ' active' : ''}`;
+                slideDiv.style.background = slide.bg;
+                slideDiv.innerHTML = `
+                    <div class="carousel-slide-content">
+                        <span class="carousel-slide-badge">${slide.tag}</span>
+                        <h1 class="carousel-slide-title">${escapeHtml(rawName)}</h1>
+                        <p class="carousel-slide-subtitle">${escapeHtml(artistName)}</p>
+                        <p class="carousel-slide-desc">${escapeHtml(slide.description)}</p>
+                        <button class="carousel-play-now-btn" data-index="${index}">
+                            <i class='bx bx-play-circle'></i> Play Now
+                        </button>
+                    </div>
+                    <div class="carousel-slide-media">
+                        <div class="carousel-album-art-wrapper">
+                            <img src="${imgUrl}" alt="${escapeHtml(rawName)}" class="carousel-album-art" loading="lazy">
+                            <div class="carousel-art-glow" style="background-image: url(${imgUrl});"></div>
+                        </div>
+                    </div>
+                `;
+                carouselEl.appendChild(slideDiv);
+
+                if (indicatorsEl) {
+                    const dot = document.createElement('div');
+                    dot.className = `carousel-dot${index === 0 ? ' active' : ''}`;
+                    dot.dataset.index = index;
+                    indicatorsEl.appendChild(dot);
+                }
+            });
+
+            // Bind clicks for the Play button inside each slide
+            carouselEl.querySelectorAll('.carousel-play-now-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetBtn = e.target.closest('.carousel-play-now-btn');
+                    const idx = parseInt(targetBtn.dataset.index, 10);
+                    if (carouselSongs && carouselSongs[idx]) {
+                        player.setQueue(carouselSongs, idx);
+                    }
+                });
+            });
+
+            // Set up automatic slides
+            startCarouselTransitions();
+
+        } catch (err) {
+            console.error('Failed to populate trending carousel:', err);
+        }
+    }
+
+    function startCarouselTransitions() {
+        const container = document.getElementById('heroBanner');
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.carousel-dot');
+        const prevBtn = document.getElementById('carouselPrevBtn');
+        const nextBtn = document.getElementById('carouselNextBtn');
+        const indicators = document.getElementById('carouselIndicators');
+
+        if (slides.length <= 1) return;
+
+        function showSlide(idx) {
+            slides.forEach(s => s.classList.remove('active'));
+            dots.forEach(d => d.classList.remove('active'));
+
+            currentSlideIdx = (idx + slides.length) % slides.length;
+            slides[currentSlideIdx].classList.add('active');
+            if (dots[currentSlideIdx]) dots[currentSlideIdx].classList.add('active');
+        }
+
+        function nextSlide() {
+            showSlide(currentSlideIdx + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlideIdx - 1);
+        }
+
+        function startAutoPlay() {
+            stopAutoPlay();
+            carouselInterval = setInterval(nextSlide, 5000);
+        }
+
+        function stopAutoPlay() {
+            if (carouselInterval) {
+                clearInterval(carouselInterval);
+                carouselInterval = null;
+            }
+        }
+
+        // Start auto play
+        startAutoPlay();
+
+        // Pause auto play on hover
+        if (container) {
+            container.removeEventListener('mouseenter', stopAutoPlay);
+            container.removeEventListener('mouseleave', startAutoPlay);
+            container.addEventListener('mouseenter', stopAutoPlay);
+            container.addEventListener('mouseleave', startAutoPlay);
+        }
+
+        // Prev/Next handlers
+        if (prevBtn) {
+            prevBtn.onclick = (e) => {
+                e.stopPropagation();
+                prevSlide();
+            };
+        }
+        if (nextBtn) {
+            nextBtn.onclick = (e) => {
+                e.stopPropagation();
+                nextSlide();
+            };
+        }
+
+        // Dot navigation click delegate
+        if (indicators) {
+            indicators.onclick = (e) => {
+                if (e.target.classList.contains('carousel-dot')) {
+                    e.stopPropagation();
+                    const idx = parseInt(e.target.dataset.index, 10);
+                    showSlide(idx);
+                }
+            };
+        }
     }
 
     // ---- Home Screen ----
@@ -615,6 +814,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainLoader.classList.add('hidden');
         homeSection.classList.remove('hidden');
         heroBanner.classList.remove('hidden');
+
+        // Populate trending sliding carousel
+        loadTrendingCarousel();
 
         // Clear existing dynamic sections
         document.querySelectorAll('.music-section.dynamic').forEach(el => el.remove());
@@ -1682,6 +1884,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             loginForm.classList.remove('hidden');
             signupForm.classList.add('hidden');
             phoneForm.classList.add('hidden');
+            if (authStatus) {
+                authStatus.textContent = '';
+                authStatus.className = 'status-msg';
+            }
         });
 
         signupTabBtn.addEventListener('click', () => {
@@ -1691,6 +1897,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             signupForm.classList.remove('hidden');
             loginForm.classList.add('hidden');
             phoneForm.classList.add('hidden');
+            if (authStatus) {
+                authStatus.textContent = '';
+                authStatus.className = 'status-msg';
+            }
         });
 
         phoneTabBtn.addEventListener('click', () => {
@@ -1700,6 +1910,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             phoneForm.classList.remove('hidden');
             loginForm.classList.add('hidden');
             signupForm.classList.add('hidden');
+            if (authStatus) {
+                authStatus.textContent = '';
+                authStatus.className = 'status-msg';
+            }
             initRecaptcha();
         });
     }
@@ -1908,30 +2122,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Dropdown Login Button
+    const dropdownLoginBtn = document.getElementById('dropdownLoginBtn');
+    if (dropdownLoginBtn) {
+        dropdownLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (profileDropdown) profileDropdown.style.display = 'none';
+            if (authBtn) authBtn.click();
+        });
+    }
+
     // Listen for Firebase Auth changes
     window.addEventListener('firebaseAuthStateChanged', (e) => {
         const user = e.detail.user;
+        const dropdownLoginBtn = document.getElementById('dropdownLoginBtn');
+        const btnMyProfile = document.getElementById('btnMyProfile');
+        const logoutBtn = document.getElementById('logoutBtn');
+
         if (user) {
-            authBtn.classList.add('hidden');
-            userProfile.classList.remove('hidden');
+            if (authBtn) authBtn.classList.add('hidden');
+            if (userProfile) userProfile.classList.remove('hidden');
             const name = user.displayName || user.phoneNumber || (user.email ? user.email.split('@')[0] : 'User');
-            userDisplayName.textContent = name;
+            if (userDisplayName) userDisplayName.textContent = name;
             
             if (profileDropdownName) profileDropdownName.textContent = name;
             if (profileDropdownAvatar) profileDropdownAvatar.textContent = name.charAt(0).toUpperCase();
             
             const badge = document.querySelector('.profile-dropdown-badge');
             if (badge) badge.textContent = 'Premium Member';
+
+            if (btnMyProfile) btnMyProfile.style.display = 'block';
+            if (logoutBtn) logoutBtn.style.display = 'block';
+            if (dropdownLoginBtn) dropdownLoginBtn.style.display = 'none';
         } else {
-            authBtn.classList.remove('hidden');
-            userProfile.classList.add('hidden');
-            userDisplayName.textContent = '';
+            if (authBtn) authBtn.classList.add('hidden'); // Keep hidden from top bar since profile tab is always visible
+            if (userProfile) userProfile.classList.remove('hidden'); // Always keep userProfile visible!
+            if (userDisplayName) userDisplayName.textContent = 'Guest';
             
             if (profileDropdownName) profileDropdownName.textContent = 'Guest User';
             if (profileDropdownAvatar) profileDropdownAvatar.textContent = 'G';
             
             const badge = document.querySelector('.profile-dropdown-badge');
             if (badge) badge.textContent = 'Free Account';
+
+            if (btnMyProfile) btnMyProfile.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            if (dropdownLoginBtn) dropdownLoginBtn.style.display = 'block';
         }
         updateLikesCountDisplay();
     });
@@ -1949,6 +2185,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (e.target === preferencesModal) {
             preferencesModal.classList.add('hidden');
+        }
+        
+        // Close profile dropdown when clicking outside
+        if (profileDropdown && userProfile && !userProfile.contains(e.target)) {
+            profileDropdown.style.display = 'none';
         }
         
         // Hide popup panels if clicking outside
@@ -2263,13 +2504,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Close dropdown on mouseleave
+    // Close dropdown on mouseleave & toggle on click (for mobile/desktop compatibility)
     if (userProfile && profileDropdown) {
         userProfile.addEventListener('mouseleave', () => {
             profileDropdown.style.display = 'none';
         });
         userProfile.addEventListener('mouseenter', () => {
             profileDropdown.style.display = 'block';
+        });
+        userProfile.addEventListener('click', (e) => {
+            if (e.target.closest('.profile-dropdown')) return;
+            e.stopPropagation();
+            const isVisible = profileDropdown.style.display === 'block' || window.getComputedStyle(profileDropdown).display === 'block';
+            profileDropdown.style.display = isVisible ? 'none' : 'block';
         });
     }
 

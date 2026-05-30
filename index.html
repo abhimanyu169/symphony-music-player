@@ -72,16 +72,9 @@
                         </select>
                     </div>
 
-                    <div class="lang-selector-container">
-                        <i class='bx bx-globe lang-icon'></i>
-                        <select id="topbarLangSelect" class="select-premium" title="Choose Music Language">
-                            <!-- populated dynamically -->
-                        </select>
-                    </div>
-                    
                     <div class="auth-actions">
-                        <button id="authBtn" class="btn-premium"><i class='bx bx-user-circle'></i> <span class="auth-text">Log In</span></button>
-                        <div id="userProfile" class="user-profile hidden">
+                        <button id="authBtn" class="btn-premium hidden" style="display: none !important;"><i class='bx bx-user-circle'></i> <span class="auth-text">Log In</span></button>
+                        <div id="userProfile" class="user-profile">
                             <i class='bx bx-user-circle' style="font-size: 18px; margin-right: 2px;"></i>
                             <span id="userDisplayName">User</span>
                             <div class="profile-dropdown" id="profileDropdown">
@@ -99,10 +92,19 @@
                                     <span><i class='bx bx-heart'></i> Liked Songs</span>
                                     <span id="dropdownLikesCount" class="badge-count" style="background: var(--accent-color); padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; color: white;">0</span>
                                 </button>
+                                <div class="profile-dropdown-item lang-dropdown-container" style="cursor: default; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 2px 0; border-radius: 8px; width: 100%; box-sizing: border-box; background: transparent;">
+                                    <span style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); pointer-events: none;"><i class='bx bx-globe' style="font-size: 16px;"></i> Language</span>
+                                    <select id="topbarLangSelect" class="select-premium" title="Choose Music Language" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text-primary); padding: 4px 8px; border-radius: 6px; outline: none; cursor: pointer; font-size: 11px; font-weight: 600; font-family: inherit; max-width: 105px;">
+                                        <!-- populated dynamically -->
+                                    </select>
+                                </div>
                                 <button class="profile-dropdown-item" id="btnDropdownCloud" style="display: none !important;">
                                     <span><i class='bx bx-cloud'></i> Cloud Sync Setup</span>
                                 </button>
                                 <div class="profile-dropdown-divider"></div>
+                                <button class="profile-dropdown-item" id="dropdownLoginBtn">
+                                    <span><i class='bx bx-log-in'></i> Log In</span>
+                                </button>
                                 <button class="profile-dropdown-item" id="logoutBtn">
                                     <span><i class='bx bx-log-out'></i> Log Out</span>
                                 </button>
@@ -278,17 +280,14 @@
                     <div class="card-grid" id="albumDetailGrid"></div>
                 </section>
 
-                <!-- Hero Banner -->
-                <div class="hero-banner" id="heroBanner">
-                    <div class="hero-banner-content">
-                        <span class="hero-badge">🎵 Now Streaming</span>
-                        <h1 id="heroGreeting">Good evening 👋</h1>
-                        <p>Discover your next favourite song. Search above or explore curated picks below.</p>
+                <!-- Trending Songs Carousel Banner (Replaces Greetings Bar) -->
+                <div class="hero-banner trending-carousel-container" id="heroBanner">
+                    <div class="trending-carousel" id="trendingCarousel">
+                        <!-- Dynamic slides injected via JS -->
                     </div>
-                    <div class="hero-clock-container">
-                        <div class="hero-clock" id="heroClock">--:--:-- --</div>
-                        <div class="hero-date" id="heroDate">---</div>
-                    </div>
+                    <button class="carousel-nav-btn prev" id="carouselPrevBtn" aria-label="Previous Slide"><i class='bx bx-chevron-left'></i></button>
+                    <button class="carousel-nav-btn next" id="carouselNextBtn" aria-label="Next Slide"><i class='bx bx-chevron-right'></i></button>
+                    <div class="carousel-indicators" id="carouselIndicators"></div>
                 </div>
 
                 <section class="music-section" id="homeSection">
