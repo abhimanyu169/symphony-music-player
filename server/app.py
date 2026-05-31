@@ -180,7 +180,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 def create_jwt_token(user_id: int, email: str) -> str:
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),
         "email": email,
         "exp": int(time.time()) + 2592000  # Token valid for 30 days
     }
@@ -223,6 +223,10 @@ class UserSignup(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class UserGoogleAuth(BaseModel):
+    name: str
+    email: EmailStr
 
 class LibrarySync(BaseModel):
     songs: List[dict]
@@ -293,6 +297,40 @@ async def login(user_data: UserLogin):
         }
     }
 
+@app.post("/api/auth/google")
+async def auth_google(user_data: UserGoogleAuth):
+    email_clean = user_data.email.strip().lower()
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Check if user already exists
+        async with db.execute("SELECT id, name FROM users WHERE email = ?", (email_clean,)) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                user_id, name = row
+            else:
+                # Create user with a dummy/random password hash
+                name = user_data.name.strip()
+                password_dummy = hash_password(str(uuid.uuid4()))
+                await db.execute(
+                    "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+                    (name, email_clean, password_dummy)
+                )
+                await db.commit()
+                # Get the inserted id
+                async with db.execute("SELECT id FROM users WHERE email = ?", (email_clean,)) as id_cursor:
+                    id_row = await id_cursor.fetchone()
+                    user_id = id_row[0]
+                    
+    token = create_jwt_token(user_id, email_clean)
+    return {
+        "success": True,
+        "token": token,
+        "user": {
+            "id": user_id,
+            "name": name,
+            "email": email_clean
+        }
+    }
+
 @app.get("/api/auth/verify")
 async def verify(request: Request):
     auth_header = request.headers.get("Authorization")
@@ -304,7 +342,7 @@ async def verify(request: Request):
         return {"success": False, "authenticated": False}
     
     # Get user details from SQLite
-    user_id = payload["sub"]
+    user_id = int(payload["sub"])
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute("SELECT name, email FROM users WHERE id = ?", (user_id,)) as cursor:
             row = await cursor.fetchone()

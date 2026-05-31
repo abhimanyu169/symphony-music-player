@@ -14,6 +14,20 @@ const _LOCAL_BACKEND    = 'http://127.0.0.1:5000';
 const _FM_IS_REMOTE     = !['localhost', '127.0.0.1'].includes(window.location.hostname);
 const BACKEND_URL       = _FM_IS_REMOTE ? _DEPLOYED_BACKEND : _LOCAL_BACKEND;
 
+// ── Firebase Initialization ───────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDCIFj_IJ-NkHqq9l4i0g2Z5_b96sadEI0",
+  appId: "1:503286105638:web:115af96369aafdaeec48e7",
+  authDomain: "sound-wave-92614.firebaseapp.com",
+  projectId: "sound-wave-92614",
+  storageBucket: "sound-wave-92614.appspot.com",
+  messagingSenderId: "503286105638"
+};
+
+if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 const firebaseManager = (() => {
     let currentUser = null;
     let isInitialized = false;
@@ -134,7 +148,56 @@ const firebaseManager = (() => {
 
 
     async function signInWithGoogle() {
-        throw new Error('Google Sign-In is only supported in Firebase cloud mode. Please use Email & Password.');
+        if (typeof firebase === 'undefined') {
+            throw new Error('Firebase SDK is not loaded. Cannot use Google Sign-In.');
+        }
+        
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        
+        try {
+            const result = await firebase.auth().signInWithPopup(provider);
+            const user = result.user;
+            if (!user || !user.email) {
+                throw new Error('Failed to retrieve email from Google Account.');
+            }
+            
+            const name = user.displayName || user.email.split('@')[0];
+            const email = user.email;
+            
+            // Sync with backend
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), 10000);
+            
+            const res = await fetch(`${BACKEND_URL}/api/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, email: email }),
+                signal: controller.signal
+            });
+            
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.detail || 'Google sign-in sync with backend failed.');
+            }
+            
+            localStorage.setItem('symphonyJwtToken', data.token);
+            currentUser = data.user;
+            window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: currentUser } }));
+            
+            await syncLibraryFromCloud();
+            
+            return currentUser;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                throw new Error('Request timed out syncing with backend. Check connection.');
+            }
+            if (err.message === 'Failed to fetch') {
+                throw new Error('Backend server is not reachable for Google Auth sync.');
+            }
+            console.error('Google Sign-In error:', err);
+            throw err;
+        }
     }
 
     async function sendOtp(phoneNumber, recaptchaVerifier) {
